@@ -13,7 +13,14 @@
 
 /* === Root / Base === */
 .root {
-    -fx-font-family: "SansSerif";
+    /* === 跨平台字体栈 (top-down match, first available wins) ===
+     * Windows 11/10  → "Microsoft YaHei"    中英文兼优，系统预装
+     * macOS          → "PingFang SC"         中英文兼优，系统预装
+     * Linux/Fedora   → "Noto Sans CJK SC"   思源黑体，需静态版
+     * Linux fallback → "Droid Sans Fallback" 兼容旧 Linux
+     * JavaFX default → "SansSerif"           逻辑字体兜底
+     */
+    -fx-font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Droid Sans Fallback", "SansSerif";
     -fx-font-size: 14px;
     -fx-font-smoothing-type: lcd;
     -fx-text-fill: #111111;

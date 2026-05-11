@@ -1,0 +1,22 @@
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Build
+target/
+*.class
+
+# JVM crash logs (redirected to logs/)
+hs_err_pid*.log
+logs/
+
+# Maven
+dependency-reduced-pom.xml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App data (user-specific)
+.nook/

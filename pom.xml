@@ -110,6 +110,7 @@
                         <option>-Dprism.subpixeltext=true</option>
                         <option>-Dprism.forceGPU=true</option>
                         <option>--enable-native-access=javafx.graphics,com.sun.jna</option>
+                        <option>-XX:ErrorFile=logs/hs_err_pid%p.log</option>
                     </options>
                 </configuration>
             </plugin>
