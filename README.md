@@ -15,7 +15,7 @@
 | UI | JavaFX + AtlantaFX (PrimerLight 主题) |
 | 音频 | VLCJ (libvlc) |
 | RSS 解析 | Rome |
-| 序列化 | Jackson |
+| 序列化 | Gson |
 | 构建 | Maven + javafx-maven-plugin |
 
 ## 环境要求

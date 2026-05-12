@@ -1,12 +1,15 @@
 package top.yangcc.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import top.yangcc.model.Podcast;
 import top.yangcc.rss.RssParser;
 
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -24,7 +27,7 @@ public class SubscriptionManager {
     private static final Path SUBSCRIPTIONS_FILE = DATA_DIR.resolve("subscriptions.json");
 
     private final ObservableList<Podcast> podcasts = FXCollections.observableArrayList();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     public SubscriptionManager() {
         loadSubscriptions();
@@ -73,7 +76,9 @@ public class SubscriptionManager {
         try {
             Files.createDirectories(DATA_DIR);
             List<Podcast> list = new ArrayList<>(podcasts);
-            mapper.writerWithDefaultPrettyPrinter().writeValue(SUBSCRIPTIONS_FILE.toFile(), list);
+            try (FileWriter writer = new FileWriter(SUBSCRIPTIONS_FILE.toFile())) {
+                gson.toJson(list, writer);
+            }
             LOG.log(Level.INFO, "Subscriptions saved to {0}", SUBSCRIPTIONS_FILE);
         } catch (IOException e) {
             LOG.log(Level.ERROR, "Failed to save subscriptions: " + e.getMessage(), e);
@@ -86,9 +91,9 @@ public class SubscriptionManager {
             return;
         }
         try {
-            List<Podcast> saved = mapper.readValue(
-                    SUBSCRIPTIONS_FILE.toFile(),
-                    new TypeReference<List<Podcast>>() {}
+            List<Podcast> saved = gson.fromJson(
+                    new FileReader(SUBSCRIPTIONS_FILE.toFile()),
+                    new TypeToken<List<Podcast>>() {}.getType()
             );
             podcasts.addAll(saved);
             LOG.log(Level.INFO, "Loaded {0} subscriptions from {1}", saved.size(), SUBSCRIPTIONS_FILE);
