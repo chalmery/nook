@@ -17,6 +17,7 @@ public class AddSubscriptionDialog {
         dialog.setTitle("添加订阅");
         dialog.setHeaderText("输入播客 RSS 地址");
         dialog.setContentText("RSS URL:");
+        dialog.setGraphic(null);
 
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(url -> {
