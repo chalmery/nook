@@ -1,6 +1,5 @@
 package top.yangcc.ui;
 
-import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -17,34 +16,21 @@ public class EpisodeListView extends VBox {
 
     private static final Logger LOG = System.getLogger("top.yangcc.ui.episodelist");
 
-    private final Label podcastTitle;
-    private final Label podcastAuthor;
     private final ListView<Episode> episodeList;
     private Episode playingEpisode;
-    private Consumer<Episode> onEpisodeSelected;
+    private Consumer<Episode> onEpisodeClicked;
     private Consumer<Episode> onPlayRequested;
 
     public EpisodeListView() {
-        setPadding(new Insets(0));
         getStyleClass().add("episode-list-view");
-
-        podcastTitle = new Label("选择一个播客");
-        podcastTitle.getStyleClass().add("podcast-title");
-        VBox.setMargin(podcastTitle, new Insets(12, 12, 0, 12));
-
-        podcastAuthor = new Label("");
-        podcastAuthor.getStyleClass().add("podcast-author");
-        VBox.setMargin(podcastAuthor, new Insets(0, 12, 8, 12));
-
-        Separator sep = new Separator();
 
         episodeList = new ListView<>();
         episodeList.setPlaceholder(new Label("  暂无单集"));
         episodeList.setCellFactory(listView -> new EpisodeCell());
         episodeList.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldVal, newVal) -> {
-                    if (onEpisodeSelected != null && newVal != null) {
-                        onEpisodeSelected.accept(newVal);
+                    if (onEpisodeClicked != null && newVal != null) {
+                        onEpisodeClicked.accept(newVal);
                     }
                 });
         episodeList.setOnMouseClicked(e -> {
@@ -58,18 +44,14 @@ public class EpisodeListView extends VBox {
         });
         VBox.setVgrow(episodeList, Priority.ALWAYS);
 
-        getChildren().addAll(podcastTitle, podcastAuthor, sep, episodeList);
+        getChildren().add(episodeList);
     }
 
     public void setPodcast(Podcast podcast) {
         if (podcast == null) {
-            podcastTitle.setText("选择一个播客");
-            podcastAuthor.setText("");
             episodeList.getItems().clear();
             return;
         }
-        podcastTitle.setText(podcast.getTitle());
-        podcastAuthor.setText(podcast.getAuthor() != null ? podcast.getAuthor() : "");
         episodeList.getItems().setAll(podcast.getEpisodes());
         playingEpisode = null;
         episodeList.refresh();
@@ -84,30 +66,52 @@ public class EpisodeListView extends VBox {
         }
     }
 
-    public void setOnEpisodeSelected(Consumer<Episode> handler) { this.onEpisodeSelected = handler; }
+    public void setOnEpisodeClicked(Consumer<Episode> handler) { this.onEpisodeClicked = handler; }
     public void setOnPlayRequested(Consumer<Episode> handler) { this.onPlayRequested = handler; }
 
     private class EpisodeCell extends ListCell<Episode> {
-        private final VBox content;
         private final Label titleLabel;
-        private final Label metaLabel;
+        private final Label dateLabel;
+        private final Label durationLabel;
+        private final Label descLabel;
         private final Label playingIndicator;
         private final HBox row;
 
         EpisodeCell() {
-            content = new VBox(2);
-            titleLabel = new Label();
-            titleLabel.getStyleClass().add("episode-title");
-            titleLabel.setWrapText(true);
-            metaLabel = new Label();
-            metaLabel.getStyleClass().add("episode-meta");
-            content.getChildren().addAll(titleLabel, metaLabel);
             playingIndicator = new Label("▸");
             playingIndicator.getStyleClass().add("playing-indicator");
             playingIndicator.setVisible(false);
-            row = new HBox(6, playingIndicator, content);
-            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            HBox.setHgrow(content, Priority.ALWAYS);
+
+            titleLabel = new Label();
+            titleLabel.getStyleClass().add("episode-title");
+            titleLabel.setMinWidth(0);
+            HBox.setHgrow(titleLabel, Priority.ALWAYS);
+
+            dateLabel = new Label();
+            dateLabel.getStyleClass().add("episode-date");
+            dateLabel.setMinWidth(80);
+            dateLabel.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+            durationLabel = new Label();
+            durationLabel.getStyleClass().add("episode-duration");
+            durationLabel.setMinWidth(60);
+            durationLabel.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+            HBox topRow = new HBox(12, titleLabel, dateLabel, durationLabel);
+            topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            topRow.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(titleLabel, Priority.ALWAYS);
+
+            descLabel = new Label();
+            descLabel.getStyleClass().add("episode-desc");
+            descLabel.setWrapText(true);
+            descLabel.setMaxHeight(18);
+
+            VBox cellContent = new VBox(2, topRow, descLabel);
+
+            row = new HBox(8, playingIndicator, cellContent);
+            row.setAlignment(javafx.geometry.Pos.TOP_LEFT);
+            HBox.setHgrow(cellContent, Priority.ALWAYS);
         }
 
         @Override
@@ -117,14 +121,25 @@ public class EpisodeListView extends VBox {
                 setGraphic(null);
             } else {
                 titleLabel.setText(episode.getTitle());
-                StringBuilder meta = new StringBuilder();
+
                 if (episode.getPubDate() != null) {
-                    meta.append(new SimpleDateFormat("yyyy-MM-dd").format(episode.getPubDate()));
+                    dateLabel.setText(new SimpleDateFormat("yyyy-MM-dd").format(episode.getPubDate()));
+                } else {
+                    dateLabel.setText("");
                 }
-                if (episode.getDuration() != null && !episode.getDuration().isEmpty()) {
-                    meta.append("  •  ").append(episode.getDuration());
+
+                durationLabel.setText(episode.getDuration() != null ? episode.getDuration() : "");
+
+                String desc = episode.getDescription();
+                if (desc != null && !desc.isBlank()) {
+                    String clean = desc.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim();
+                    descLabel.setText(clean.length() > 50 ? clean.substring(0, 50) + "..." : clean);
+                    descLabel.setVisible(true);
+                    descLabel.setManaged(true);
+                } else {
+                    descLabel.setVisible(false);
+                    descLabel.setManaged(false);
                 }
-                metaLabel.setText(meta.toString());
 
                 boolean isPlaying = episode == playingEpisode;
                 playingIndicator.setVisible(isPlaying);

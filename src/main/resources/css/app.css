@@ -1,17 +1,10 @@
 /* === Typography & Base === */
 .root {
-    /* === 跨平台字体栈 (top-down match, first available wins) ===
-     * Windows 11/10  → "Microsoft YaHei"    中英文兼优，系统预装
-     * macOS          → "PingFang SC"         中英文兼优，系统预装
-     * Linux/Fedora   → "Noto Sans CJK SC"   思源黑体，需静态版
-     * Linux fallback → "Droid Sans Fallback" 兼容旧 Linux
-     * JavaFX default → "SansSerif"           逻辑字体兜底
-     */
     -fx-font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Droid Sans Fallback", "SansSerif";
     -fx-font-size: 14px;
 }
 
-/* === Sidebar Layout === */
+/* === Sidebar === */
 .sidebar {
     -fx-background-color: -color-bg-inset;
     -fx-padding: 0;
@@ -22,57 +15,169 @@
     -fx-font-weight: bold;
 }
 
-.sidebar-section-header {
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 4 12 2 12;
-}
-
 .sidebar-nav-btn {
+    -fx-background-color: transparent;
     -fx-font-size: 13px;
-    -fx-padding: 6 12 6 12;
+    -fx-padding: 8 16 8 16;
     -fx-alignment: center-left;
-    -fx-background-radius: 4;
+    -fx-background-radius: 0;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-color: transparent;
 }
 
-.sidebar-add-btn {
+.sidebar-nav-btn:hover {
+    -fx-background-color: -color-bg-subtle;
+}
+
+.sidebar-nav-btn:disabled {
+    -fx-opacity: 0.45;
+}
+
+.sidebar-nav-selected {
+    -fx-background-color: -color-accent-subtle;
+    -fx-border-color: -color-accent-fg;
+}
+
+/* === Subscription Grid === */
+.grid-view {
+    -fx-background-color: -color-bg-default;
+}
+
+.grid-header {
+    -fx-padding: 0 0 12 0;
+}
+
+.grid-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+.grid-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.grid-scroll {
+    -fx-background-color: transparent;
+}
+
+.grid-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.card-grid {
+    -fx-background-color: transparent;
+}
+
+/* === Podcast Card === */
+.podcast-card {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+
+.podcast-card-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.podcast-card-updated {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-padding: 4 0 0 0;
+}
+
+/* === Podcast Detail === */
+.podcast-detail-header {
+    -fx-background-color: -color-bg-default;
+}
+
+.podcast-detail-title {
     -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-padding: 2 10 2 10;
+}
+
+.podcast-detail-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.subscribed-badge {
+    -fx-background-color: -color-bg-subtle;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-size: 12px;
+    -fx-padding: 4 10 4 10;
+    -fx-background-radius: 12;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.back-btn {
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-padding: 4 10 4 10;
     -fx-cursor: hand;
 }
 
-.sidebar .list-cell {
-    -fx-padding: 6 12 6 12;
+.back-btn:hover {
+    -fx-background-color: -color-bg-subtle;
+    -fx-background-radius: 6;
+}
+
+/* === Episode List === */
+.episode-count-header {
     -fx-font-size: 13px;
-}
-
-/* === Episode List Layout === */
-.episode-list-view .list-cell {
-    -fx-padding: 10 12 10 12;
-    -fx-font-size: 14px;
-}
-
-.podcast-title {
-    -fx-font-size: 18px;
     -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-muted;
 }
 
-.podcast-author {
-    -fx-font-size: 12px;
+.episode-list-view .list-cell {
+    -fx-padding: 10 16 10 24;
+    -fx-font-size: 14px;
+    -fx-background-color: transparent;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 0 0 1 0;
+}
+
+.episode-list-view .list-cell:selected {
+    -fx-background-color: -color-accent-subtle;
+}
+
+.episode-list-view .list-cell:hover {
+    -fx-background-color: -color-bg-subtle;
 }
 
 .episode-title {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
 }
 
 .episode-title.episode-playing {
     -fx-text-fill: -color-accent-fg;
 }
 
-.episode-meta {
+.episode-date {
     -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-text-alignment: right;
+}
+
+.episode-duration {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-text-alignment: right;
+}
+
+.episode-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
 }
 
 .playing-indicator {
@@ -81,7 +186,7 @@
     -fx-text-fill: -color-accent-fg;
 }
 
-/* === Detail View Layout === */
+/* === Detail View === */
 .detail-title {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -113,7 +218,7 @@
     -fx-background-radius: 6;
 }
 
-/* === Player Bar Layout === */
+/* === Player Bar === */
 .player-bar {
     -fx-background-color: -color-bg-inset;
 }
@@ -147,7 +252,7 @@
     -fx-min-width: 50px;
 }
 
-/* === Settings Dialog Layout === */
+/* === Settings Dialog === */
 .settings-category-list {
     -fx-background-color: -color-bg-inset;
     -fx-padding: 0;

@@ -14,9 +14,9 @@ public class AddSubscriptionDialog {
 
     public static void show(SubscriptionManager manager, Runnable onSuccess) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("添加订阅");
-        dialog.setHeaderText("输入播客 RSS 地址");
-        dialog.setContentText("RSS URL:");
+        dialog.setTitle("添加新的播客源");
+        dialog.setHeaderText("请输入您想订阅的播客 RSS 链接，系统将自动解析节目信息。");
+        dialog.setContentText("RSS 链接 (URL)");
         dialog.setGraphic(null);
 
         Optional<String> result = dialog.showAndWait();

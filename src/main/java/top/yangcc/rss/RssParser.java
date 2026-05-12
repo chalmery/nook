@@ -5,6 +5,7 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import org.jdom2.Element;
 import top.yangcc.model.Episode;
 import top.yangcc.model.Podcast;
 
@@ -32,13 +33,41 @@ public class RssParser {
         podcast.setDescription(feed.getDescription());
         podcast.setAuthor(feed.getAuthor());
         podcast.setLink(feed.getLink());
+        podcast.setLanguage(feed.getLanguage());
+        podcast.setCopyright(feed.getCopyright());
 
         LOG.log(Level.INFO, "Feed title: {0}, author: {1}, entries: {2}",
                 feed.getTitle(), feed.getAuthor(), feed.getEntries().size());
 
         if (feed.getImage() != null) {
             podcast.setImageUrl(feed.getImage().getUrl());
-            LOG.log(Level.INFO, "Feed image: {0}", feed.getImage().getUrl());
+            LOG.log(Level.INFO, "Feed image (standard): {0}", feed.getImage().getUrl());
+        }
+
+        // try itunes:image from foreign markup
+        if (podcast.getImageUrl() == null || podcast.getImageUrl().isBlank()) {
+            for (Element el : feed.getForeignMarkup()) {
+                if ("image".equals(el.getName())
+                        && el.getAttributeValue("href") != null
+                        && el.getNamespace() != null
+                        && el.getNamespace().getURI() != null
+                        && el.getNamespace().getURI().contains("itunes")) {
+                    podcast.setImageUrl(el.getAttributeValue("href"));
+                    LOG.log(Level.INFO, "Feed image (itunes): {0}", podcast.getImageUrl());
+                    break;
+                }
+            }
+        }
+
+        // itunes:author
+        for (Element el : feed.getForeignMarkup()) {
+            if ("author".equals(el.getName())
+                    && el.getNamespace() != null
+                    && el.getNamespace().getURI() != null
+                    && el.getNamespace().getURI().contains("itunes")) {
+                podcast.setItunesAuthor(el.getTextTrim());
+                break;
+            }
         }
 
         List<Episode> episodes = new ArrayList<>();
@@ -48,6 +77,7 @@ public class RssParser {
             episode.setTitle(entry.getTitle());
             episode.setGuid(entry.getUri());
             episode.setPubDate(entry.getPublishedDate());
+            episode.setLink(entry.getLink());
 
             if (entry.getDescription() != null) {
                 episode.setDescription(entry.getDescription().getValue());
@@ -68,6 +98,19 @@ public class RssParser {
             if (episode.getAudioUrl() != null) withAudio++;
 
             episode.setDuration(extractDuration(entry));
+
+            // itunes:season and itunes:episode
+            for (Element el : entry.getForeignMarkup()) {
+                if (el.getNamespace() == null || el.getNamespace().getURI() == null
+                        || !el.getNamespace().getURI().contains("itunes")) continue;
+                String name = el.getName();
+                if ("season".equals(name)) {
+                    try { episode.setSeason(Integer.parseInt(el.getTextTrim())); } catch (NumberFormatException ignored) {}
+                } else if ("episode".equals(name)) {
+                    try { episode.setEpisodeNumber(Integer.parseInt(el.getTextTrim())); } catch (NumberFormatException ignored) {}
+                }
+            }
+
             episodes.add(episode);
         }
 
