@@ -1,10 +1,10 @@
 package top.yangcc;
 
-import atlantafx.base.theme.PrimerLight;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import top.yangcc.ui.MainLayout;
+import top.yangcc.ui.ThemeManager;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -21,8 +21,8 @@ public class NookApp extends Application {
         LOG.log(Level.INFO, "Java version: {0}", System.getProperty("java.version"));
         LOG.log(Level.INFO, "JavaFX version: {0}", System.getProperty("javafx.version"));
 
-        Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
-        LOG.log(Level.INFO, "AtlantaFX PrimerLight theme applied");
+        ThemeManager tm = ThemeManager.getInstance();
+        LOG.log(Level.INFO, "ThemeManager initialized, theme: {0}", tm.getCurrentTheme().getName());
 
         mainLayout = new MainLayout();
         LOG.log(Level.INFO, "MainLayout created");

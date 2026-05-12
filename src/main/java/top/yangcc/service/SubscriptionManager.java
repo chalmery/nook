@@ -2,6 +2,8 @@ package top.yangcc.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,7 +18,9 @@ import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class SubscriptionManager {
@@ -27,7 +31,20 @@ public class SubscriptionManager {
     private static final Path SUBSCRIPTIONS_FILE = DATA_DIR.resolve("subscriptions.json");
 
     private final ObservableList<Podcast> podcasts = FXCollections.observableArrayList();
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(Date.class, (JsonDeserializer<Date>) (json, typeOfT, context) -> {
+                JsonPrimitive prim = json.getAsJsonPrimitive();
+                if (prim.isNumber()) {
+                    return new Date(prim.getAsLong());
+                }
+                try {
+                    return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(prim.getAsString());
+                } catch (Exception e) {
+                    return new Date();
+                }
+            })
+            .create();
 
     public SubscriptionManager() {
         loadSubscriptions();

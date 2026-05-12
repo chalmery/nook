@@ -18,6 +18,7 @@ public class SidebarView extends VBox {
     private final ListView<Podcast> subscriptionList;
     private Consumer<Podcast> onPodcastSelected;
     private Runnable onAddSubscription;
+    private Runnable onOpenSettings;
 
     public SidebarView() {
         setPrefWidth(200);
@@ -38,7 +39,7 @@ public class SidebarView extends VBox {
         subHeader.getStyleClass().add("sidebar-section-header");
 
         Button addBtn = new Button("+");
-        addBtn.getStyleClass().add("sidebar-add-btn");
+        addBtn.getStyleClass().addAll("sidebar-add-btn", "accent");
         addBtn.setOnAction(e -> {
             LOG.log(Level.INFO, "Add subscription button clicked");
             if (onAddSubscription != null) onAddSubscription.run();
@@ -73,7 +74,10 @@ public class SidebarView extends VBox {
         Button historyBtn = createNavButton("历史");
         historyBtn.setDisable(true);
         Button settingsBtn = createNavButton("设置");
-        settingsBtn.setDisable(true);
+        settingsBtn.setOnAction(e -> {
+            LOG.log(Level.INFO, "Settings button clicked");
+            if (onOpenSettings != null) onOpenSettings.run();
+        });
 
         Separator sep2 = new Separator();
 
@@ -94,6 +98,7 @@ public class SidebarView extends VBox {
 
     public void setOnPodcastSelected(Consumer<Podcast> handler) { this.onPodcastSelected = handler; }
     public void setOnAddSubscription(Runnable handler) { this.onAddSubscription = handler; }
+    public void setOnOpenSettings(Runnable handler) { this.onOpenSettings = handler; }
     public ListView<Podcast> getSubscriptionList() { return subscriptionList; }
 
     public void selectPodcast(Podcast podcast) {

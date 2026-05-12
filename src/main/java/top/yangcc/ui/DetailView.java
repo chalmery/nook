@@ -51,7 +51,7 @@ public class DetailView extends VBox {
         VBox.setMargin(chaptersPlaceholder, new Insets(0, 12, 12, 12));
 
         Button playBtn = new Button("▶  播放");
-        playBtn.getStyleClass().add("detail-play-btn");
+        playBtn.getStyleClass().addAll("detail-play-btn", "accent");
         playBtn.setMaxWidth(Double.MAX_VALUE);
         playBtn.setOnAction(e -> {
             LOG.log(Level.INFO, "Detail play button clicked");

@@ -5,6 +5,7 @@ import javafx.animation.Timeline;
 import javafx.scene.control.Alert;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import top.yangcc.model.Episode;
 import top.yangcc.model.Podcast;
@@ -76,6 +77,11 @@ public class MainLayout extends BorderPane {
                     LOG.log(Level.INFO, "New subscription added: {0}", last.getTitle());
                 }
             });
+        });
+
+        sidebar.setOnOpenSettings(() -> {
+            LOG.log(Level.INFO, "Open settings requested");
+            SettingsDialog.show((Stage) getScene().getWindow());
         });
 
         sidebar.setOnPodcastSelected(podcast -> {
