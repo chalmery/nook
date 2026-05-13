@@ -119,7 +119,7 @@ public class EpisodeListView extends VBox {
             VBox cellContent = new VBox(2, topRow, descLabel);
 
             row = new HBox(8, playingIndicator, cellContent);
-            row.setAlignment(Pos.TOP_LEFT);
+            row.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(cellContent, Priority.ALWAYS);
         }
 
