@@ -1,9 +1,8 @@
 package top.yangcc.ui;
 
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.geometry.Pos;
 import top.yangcc.model.Episode;
 import top.yangcc.model.Podcast;
 
@@ -18,6 +17,7 @@ public class EpisodeListView extends VBox {
 
     private final ListView<Episode> episodeList;
     private Episode playingEpisode;
+    private Episode loadingEpisode;
     private Consumer<Episode> onEpisodeClicked;
     private Consumer<Episode> onPlayRequested;
 
@@ -60,10 +60,17 @@ public class EpisodeListView extends VBox {
 
     public void setPlayingEpisode(Episode episode) {
         this.playingEpisode = episode;
+        this.loadingEpisode = null;
         episodeList.refresh();
         if (episode != null) {
             LOG.log(Level.INFO, "Now playing indicator set to: {0}", episode.getTitle());
         }
+    }
+
+    public void setLoadingEpisode(Episode episode) {
+        this.loadingEpisode = episode;
+        this.playingEpisode = null;
+        episodeList.refresh();
     }
 
     public void setOnEpisodeClicked(Consumer<Episode> handler) { this.onEpisodeClicked = handler; }
@@ -85,22 +92,24 @@ public class EpisodeListView extends VBox {
             titleLabel = new Label();
             titleLabel.getStyleClass().add("episode-title");
             titleLabel.setMinWidth(0);
-            HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
             dateLabel = new Label();
             dateLabel.getStyleClass().add("episode-date");
             dateLabel.setMinWidth(80);
-            dateLabel.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+            dateLabel.setAlignment(Pos.CENTER_RIGHT);
 
             durationLabel = new Label();
             durationLabel.getStyleClass().add("episode-duration");
             durationLabel.setMinWidth(60);
-            durationLabel.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+            durationLabel.setAlignment(Pos.CENTER_RIGHT);
 
-            HBox topRow = new HBox(12, titleLabel, dateLabel, durationLabel);
-            topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-            topRow.setMaxWidth(Double.MAX_VALUE);
-            HBox.setHgrow(titleLabel, Priority.ALWAYS);
+            HBox rightBox = new HBox(8, dateLabel, durationLabel);
+            rightBox.setAlignment(Pos.CENTER_RIGHT);
+
+            BorderPane topRow = new BorderPane();
+            topRow.setLeft(titleLabel);
+            topRow.setRight(rightBox);
+            BorderPane.setMargin(rightBox, new javafx.geometry.Insets(0, 0, 0, 8));
 
             descLabel = new Label();
             descLabel.getStyleClass().add("episode-desc");
@@ -110,7 +119,7 @@ public class EpisodeListView extends VBox {
             VBox cellContent = new VBox(2, topRow, descLabel);
 
             row = new HBox(8, playingIndicator, cellContent);
-            row.setAlignment(javafx.geometry.Pos.TOP_LEFT);
+            row.setAlignment(Pos.TOP_LEFT);
             HBox.setHgrow(cellContent, Priority.ALWAYS);
         }
 
@@ -141,11 +150,24 @@ public class EpisodeListView extends VBox {
                     descLabel.setManaged(false);
                 }
 
+                boolean isLoading = episode == loadingEpisode;
                 boolean isPlaying = episode == playingEpisode;
-                playingIndicator.setVisible(isPlaying);
-                if (isPlaying) {
+
+                if (isLoading) {
+                    playingIndicator.setText("⟳");
+                    playingIndicator.getStyleClass().add("episode-loading");
+                    playingIndicator.getStyleClass().remove("playing-indicator");
+                    playingIndicator.setVisible(true);
+                    titleLabel.getStyleClass().remove("episode-playing");
+                } else if (isPlaying) {
+                    playingIndicator.setText("▸");
+                    playingIndicator.getStyleClass().remove("episode-loading");
+                    playingIndicator.getStyleClass().add("playing-indicator");
+                    playingIndicator.setVisible(true);
                     titleLabel.getStyleClass().add("episode-playing");
                 } else {
+                    playingIndicator.setVisible(false);
+                    playingIndicator.getStyleClass().remove("episode-loading");
                     titleLabel.getStyleClass().remove("episode-playing");
                 }
 
