@@ -221,35 +221,93 @@
 /* === Player Bar === */
 .player-bar {
     -fx-background-color: -color-bg-inset;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1 0 0 0;
 }
 
-.progress-slider {
+.player-episode-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.player-podcast-name {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.player-play-btn {
+    -fx-background-color: -color-fg-default;
+    -fx-text-fill: -color-bg-default;
+    -fx-font-size: 14px;
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-max-width: 32px;
+    -fx-max-height: 32px;
+    -fx-background-radius: 16;
     -fx-padding: 0;
-}
-
-.progress-slider .track {
-    -fx-pref-height: 4px;
-}
-
-.progress-slider .thumb {
-    -fx-pref-height: 12px;
-    -fx-pref-width: 12px;
-}
-
-.now-playing-label {
-    -fx-font-size: 12px;
-    -fx-padding: 0 0 2 0;
-}
-
-.control-btn {
-    -fx-font-size: 18px;
-    -fx-padding: 2 8 2 8;
     -fx-cursor: hand;
 }
 
-.time-label {
+.player-ctrl-btn {
+    -fx-background-color: transparent;
+    -fx-font-size: 14px;
+    -fx-padding: 2 4 2 4;
+    -fx-cursor: hand;
+}
+
+.player-progress {
+    -fx-padding: 4 0 4 0;
+}
+
+.player-progress .track {
+    -fx-pref-height: 4px;
+    -fx-background-color: -color-border-muted;
+}
+
+.player-progress .thumb {
+    -fx-pref-height: 12px;
+    -fx-pref-width: 12px;
+    -fx-background-color: -color-accent-fg;
+    -fx-background-radius: 6;
+}
+
+.player-time {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-min-width: 36px;
+}
+
+.player-speed-btn {
+    -fx-background-color: transparent;
     -fx-font-size: 12px;
-    -fx-min-width: 50px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 8 4 8;
+    -fx-cursor: hand;
+    -fx-background-radius: 4;
+}
+
+.player-speed-btn:hover {
+    -fx-background-color: -color-bg-subtle;
+}
+
+.player-vol-icon {
+    -fx-font-size: 14px;
+}
+
+.player-vol-slider {
+    -fx-padding: 0;
+}
+
+.player-vol-slider .track {
+    -fx-pref-height: 3px;
+    -fx-background-color: -color-border-muted;
+}
+
+.player-vol-slider .thumb {
+    -fx-pref-height: 8px;
+    -fx-pref-width: 8px;
+    -fx-background-color: -color-fg-muted;
 }
 
 /* === Settings Dialog === */

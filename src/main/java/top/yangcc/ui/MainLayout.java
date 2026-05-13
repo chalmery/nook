@@ -145,7 +145,8 @@ public class MainLayout extends BorderPane {
         detailView.setPlayingEpisode(episode);
 
         String podcastTitle = selectedPodcast != null ? selectedPodcast.getTitle() : "";
-        playerBar.setNowPlaying(episode, podcastTitle);
+        String imageUrl = selectedPodcast != null ? selectedPodcast.getImageUrl() : null;
+        playerBar.setNowPlaying(episode, podcastTitle, imageUrl);
         LOG.log(Level.INFO, "Playback initiated: {0} - {1}", podcastTitle, episode.getTitle());
     }
 
