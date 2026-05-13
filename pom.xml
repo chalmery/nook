@@ -106,9 +106,10 @@
                 <configuration>
                     <mainClass>top.yangcc.NookApp</mainClass>
                     <options>
-                        <option>-Dprism.lcdtext=true</option>
-                        <option>-Dprism.subpixeltext=true</option>
+                        <option>-Dprism.lcdtext=false</option>
+                        <option>-Dprism.subpixeltext=false</option>
                         <option>-Dprism.forceGPU=true</option>
+                        <option>-Djavafx.ime=true</option>
                         <option>--enable-native-access=javafx.graphics,com.sun.jna</option>
                         <option>-XX:ErrorFile=logs/hs_err_pid%p.log</option>
                     </options>

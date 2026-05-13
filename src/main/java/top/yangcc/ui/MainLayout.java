@@ -9,6 +9,7 @@ import javafx.util.Duration;
 import top.yangcc.model.Episode;
 import top.yangcc.model.Podcast;
 import top.yangcc.player.AudioPlayer;
+import top.yangcc.service.ITunesSearchService;
 import top.yangcc.service.SubscriptionManager;
 
 import java.lang.System.Logger;
@@ -19,10 +20,13 @@ public class MainLayout extends BorderPane {
     private static final Logger LOG = System.getLogger("top.yangcc.ui.layout");
 
     private final SubscriptionManager subscriptionManager;
+    private final ITunesSearchService iTunesSearchService;
     private final AudioPlayer audioPlayer;
 
     private final SidebarView sidebar;
     private final SubscriptionGridView gridView;
+    private final DiscoverView discoverView;
+    private final DiscoverDetailView discoverDetailView;
     private final PodcastDetailView detailView;
     private final PlayerBar playerBar;
 
@@ -37,11 +41,15 @@ public class MainLayout extends BorderPane {
         LOG.log(Level.INFO, "SubscriptionManager ready, {0} subscriptions loaded",
                 subscriptionManager.getPodcasts().size());
 
+        iTunesSearchService = new ITunesSearchService();
+
         audioPlayer = new AudioPlayer();
         LOG.log(Level.INFO, "AudioPlayer initialized, available={0}", audioPlayer.isAvailable());
 
         sidebar = new SidebarView();
         gridView = new SubscriptionGridView(subscriptionManager.getPodcasts());
+        discoverView = new DiscoverView();
+        discoverDetailView = new DiscoverDetailView();
         detailView = new PodcastDetailView();
         playerBar = new PlayerBar();
 
@@ -56,6 +64,10 @@ public class MainLayout extends BorderPane {
         setLeft(sidebar);
         setCenter(gridView);
         setBottom(playerBar);
+    }
+
+    private void showDiscoverView() {
+        setCenter(discoverView);
     }
 
     private void showGridView() {
@@ -74,6 +86,10 @@ public class MainLayout extends BorderPane {
         // --- sidebar navigation ---
         sidebar.setOnNavigate(target -> {
             switch (target) {
+                case DISCOVER:
+                    LOG.log(Level.INFO, "Navigate to discover view");
+                    showDiscoverView();
+                    break;
                 case SUBSCRIPTIONS:
                     LOG.log(Level.INFO, "Navigate to subscriptions grid");
                     showGridView();
@@ -101,6 +117,20 @@ public class MainLayout extends BorderPane {
             showPodcastDetail(podcast);
         });
 
+        // --- discover ---
+        discoverView.setOnPodcastSelected(podcast -> {
+            LOG.log(Level.INFO, "Discover podcast selected: {0}", podcast.getTitle());
+            selectedPodcast = podcast;
+            discoverDetailView.setPodcast(podcast);
+            discoverDetailView.setOnSubscribe(p -> subscribeFromDiscover(p));
+            setCenter(discoverDetailView);
+        });
+
+        discoverDetailView.setOnBack(() -> {
+            LOG.log(Level.INFO, "Back to discover from detail");
+            showDiscoverView();
+        });
+
         // --- podcast detail ---
         detailView.setOnBack(() -> {
             LOG.log(Level.INFO, "Back to grid");
@@ -125,6 +155,28 @@ public class MainLayout extends BorderPane {
         playerBar.setOnVolumeChange(vol -> audioPlayer.setVolume(vol));
 
         audioPlayer.setOnStatusChanged(this::onPlayerStatusChanged);
+    }
+
+    private void subscribeFromDiscover(Podcast podcast) {
+        String feedUrl = podcast.getRssUrl();
+        // trending podcasts store collectionId in link field, need to look up feedUrl
+        if ((feedUrl == null || feedUrl.isBlank()) && podcast.getLink() != null) {
+            feedUrl = iTunesSearchService.lookupFeedUrl(podcast.getLink());
+        }
+        if (feedUrl == null || feedUrl.isBlank()) {
+            discoverDetailView.setSubscribeError("无法获取该播客的 RSS 地址");
+            return;
+        }
+
+        try {
+            Podcast subscribed = subscriptionManager.addSubscription(feedUrl);
+            LOG.log(Level.INFO, "Subscribed to: {0}", subscribed.getTitle());
+            discoverDetailView.setSubscribeSuccess();
+            gridView.refreshCards();
+        } catch (Exception ex) {
+            LOG.log(Level.ERROR, "Failed to subscribe: " + ex.getMessage(), ex);
+            discoverDetailView.setSubscribeError(ex.getMessage());
+        }
     }
 
     private void playEpisode(Episode episode) {

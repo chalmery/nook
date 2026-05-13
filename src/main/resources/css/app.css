@@ -343,3 +343,217 @@
     -fx-font-weight: bold;
     -fx-padding: 4 0 2 0;
 }
+
+/* === Discover View === */
+.discover-view {
+    -fx-background-color: -color-bg-default;
+}
+
+.discover-root-scroll {
+    -fx-background-color: transparent;
+}
+
+.discover-root-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Search bar */
+.discover-search-bar {
+    -fx-background-color: -color-bg-inset;
+    -fx-background-radius: 8;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.discover-search-field {
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-padding: 0;
+}
+
+.discover-search-icon {
+    -fx-font-size: 16px;
+}
+
+/* Section title */
+.discover-section-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 16 0 4 0;
+}
+
+/* Trending */
+.discover-trending-section {
+    -fx-padding: 8 0 0 0;
+}
+
+.discover-trending-scroll {
+    -fx-background-color: transparent;
+}
+
+.discover-trending-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.discover-trending-card {
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+
+.discover-trending-image {
+    -fx-border-radius: 12;
+}
+
+.discover-rank-badge {
+    -fx-background-color: rgba(0, 0, 0, 0.65);
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 8;
+    -fx-min-width: 22px;
+    -fx-alignment: center;
+}
+
+.discover-trending-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.discover-trending-author {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+/* Genre bar */
+.discover-genre-bar {
+    -fx-padding: 8 0 4 0;
+}
+
+.discover-genre-flow {
+    -fx-background-color: transparent;
+}
+
+.discover-genre-chip {
+    -fx-background-color: -color-bg-inset;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-size: 13px;
+    -fx-padding: 4 14 4 14;
+    -fx-background-radius: 30;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 30;
+    -fx-cursor: hand;
+}
+
+.discover-genre-chip:hover {
+    -fx-background-color: -color-bg-subtle;
+    -fx-text-fill: -color-fg-default;
+}
+
+.discover-genre-chip-active {
+    -fx-background-color: -color-accent-fg;
+    -fx-text-fill: white;
+    -fx-border-color: -color-accent-fg;
+}
+
+.discover-genre-chip-active:hover {
+    -fx-background-color: -color-accent-fg;
+    -fx-text-fill: white;
+}
+
+/* Grid cards */
+.discover-card-grid {
+    -fx-background-color: transparent;
+}
+
+.discover-grid-scroll {
+    -fx-background-color: transparent;
+}
+
+.discover-grid-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.discover-grid-card {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+
+.discover-grid-image {
+    -fx-border-radius: 10;
+}
+
+.discover-grid-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.discover-grid-author {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-padding: 4 0 0 0;
+}
+
+/* Loading / empty */
+.discover-loading {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.discover-empty {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+/* === Discover Detail === */
+.discover-detail {
+    -fx-background-color: -color-bg-default;
+}
+
+.discover-detail-header {
+    -fx-background-color: -color-bg-default;
+}
+
+.discover-detail-image-pane {
+    -fx-background-color: -color-bg-inset;
+    -fx-background-radius: 12;
+}
+
+.discover-detail-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.discover-detail-author {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.discover-detail-desc {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-line-spacing: 4px;
+}
+
+.discover-detail-status {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.discover-detail-success {
+    -fx-text-fill: -color-success-fg;
+}
+
+.discover-detail-error {
+    -fx-text-fill: -color-danger-fg;
+}

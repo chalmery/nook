@@ -35,7 +35,7 @@ public class SidebarView extends VBox {
         appTitle.setAlignment(Pos.CENTER);
         VBox.setMargin(appTitle, new Insets(16, 12, 16, 12));
 
-        addNavButton("发现", NavTarget.DISCOVER, true);
+        addNavButton("发现", NavTarget.DISCOVER, false);
         Button subsBtn = addNavButton("订阅", NavTarget.SUBSCRIPTIONS, false);
         addNavButton("下载", NavTarget.DOWNLOADS, true);
         addNavButton("历史", NavTarget.HISTORY, true);
