@@ -7,6 +7,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -19,6 +20,9 @@ import top.yangcc.service.ITunesSearchService;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -31,11 +35,11 @@ public class DiscoverView extends BorderPane {
 
     private static final int BATCH_SIZE = 30;
     private static final int PAGE_CHUNK = 15;
-    private static final double TRENDING_CARD_WIDTH = 140;
-    private static final double TRENDING_IMG_SIZE = 140;
-    private static final double TRENDING_SCROLL_HEIGHT = 230;
-    private static final double GRID_CARD_WIDTH = 180;
-    private static final double GRID_IMG_HEIGHT = 140;
+    private static final double TRENDING_CARD_WIDTH = 190;
+    private static final double TRENDING_IMG_SIZE = 190;
+    private static final double TRENDING_SCROLL_HEIGHT = 290;
+    private static final double GRID_CARD_WIDTH = 190;
+    private static final double GRID_IMG_SIZE = 190;
 
     private final ITunesSearchService searchService;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
@@ -50,6 +54,9 @@ public class DiscoverView extends BorderPane {
     private final Button viewAllBtn;
     private final TextField searchField;
     private final GenreChipBar genreChipBar;
+    private final HBox searchBar;
+    private final HBox backBar;
+    private final VBox topSection;
 
     // grid
     private final FlowPane cardGrid;
@@ -65,6 +72,7 @@ public class DiscoverView extends BorderPane {
     private boolean hasMore = true;
     private boolean trendingExpanded;
     private boolean isSearching;
+    private boolean isTrendingFullView;
     private boolean scrollThrottle;
 
     private Consumer<Podcast> onPodcastSelected;
@@ -82,7 +90,7 @@ public class DiscoverView extends BorderPane {
         viewAllBtn = new Button("查看全部 →");
         viewAllBtn.getStyleClass().addAll("accent");
         viewAllBtn.setStyle("-fx-font-size: 11px; -fx-padding: 2 10 2 10;");
-        viewAllBtn.setOnAction(e -> toggleTrendingExpand());
+        viewAllBtn.setOnAction(e -> openTrendingFullView());
 
         HBox trendingHeader = new HBox(trendingTitle, spacer(), viewAllBtn);
         trendingHeader.setAlignment(Pos.CENTER_LEFT);
@@ -103,15 +111,25 @@ public class DiscoverView extends BorderPane {
         trendingSection.getStyleClass().add("discover-trending-section");
 
         // ==========================================
-        // Search bar (button/Enter trigger only, no auto-debounce)
+        // Back bar (shown in trending full view)
+        // ==========================================
+        Button backBtn = new Button("←  返回");
+        backBtn.getStyleClass().add("back-btn");
+        backBtn.setOnAction(e -> closeTrendingFullView());
+        backBar = new HBox(backBtn);
+        backBar.setAlignment(Pos.CENTER_LEFT);
+        backBar.setPadding(new Insets(4, 24, 0, 24));
+        backBar.setVisible(false);
+        backBar.setManaged(false);
+
+        // ==========================================
+        // Search bar
         // ==========================================
         searchField = new TextField();
         searchField.setPromptText("搜索播客或输入关键词...");
         searchField.getStyleClass().add("discover-search-field");
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        // Only trigger search on Enter key or button — no textProperty listener
-        // so IME composition on Linux works correctly
         Runnable runSearch = () -> {
             String query = searchField.getText();
             if (query != null && !query.isBlank()) {
@@ -129,14 +147,14 @@ public class DiscoverView extends BorderPane {
         searchBtn.setStyle("-fx-font-size: 12px; -fx-padding: 4 14 4 14;");
         searchBtn.setOnAction(e -> runSearch.run());
 
-        HBox searchBar = new HBox(8, searchField, searchBtn);
+        searchBar = new HBox(8, searchField, searchBtn);
         searchBar.setAlignment(Pos.CENTER_LEFT);
         searchBar.getStyleClass().add("discover-search-bar");
         searchBar.setPadding(new Insets(8, 14, 8, 14));
         VBox.setMargin(searchBar, new Insets(12, 0, 4, 0));
 
         // ==========================================
-        // Genre bar (responsive FlowPane)
+        // Genre bar
         // ==========================================
         genreChipBar = new GenreChipBar();
 
@@ -146,7 +164,7 @@ public class DiscoverView extends BorderPane {
         cardGrid = new FlowPane();
         cardGrid.setHgap(16);
         cardGrid.setVgap(16);
-        cardGrid.setPadding(new Insets(8, 0, 0, 0));
+        cardGrid.setPadding(new Insets(8, 24, 0, 24));
         cardGrid.getStyleClass().add("discover-card-grid");
 
         loadingLabel = new Label();
@@ -165,10 +183,10 @@ public class DiscoverView extends BorderPane {
         // ==========================================
         // Layout assembly
         // ==========================================
-        VBox topSection = new VBox(trendingSection, searchBar, genreChipBar);
+        topSection = new VBox(trendingSection, searchBar, genreChipBar);
         topSection.setPadding(new Insets(16, 24, 0, 24));
 
-        VBox contentBox = new VBox(topSection, gridScroll);
+        VBox contentBox = new VBox(backBar, topSection, gridScroll);
         contentBox.setFillWidth(true);
 
         rootScroll = new ScrollPane(contentBox);
@@ -182,10 +200,9 @@ public class DiscoverView extends BorderPane {
         // ==========================================
         rootScroll.vvalueProperty().addListener((obs, old, val) -> {
             if (scrollThrottle) return;
-            if (val.doubleValue() > 0.8 && !isLoading && hasMore) {
+            if (val.doubleValue() > 0.8 && !isLoading) {
                 scrollThrottle = true;
                 showNextChunk();
-                // re-arm throttle after 200ms
                 PauseTransition pt = new PauseTransition(Duration.millis(200));
                 pt.setOnFinished(ev -> scrollThrottle = false);
                 pt.play();
@@ -198,17 +215,60 @@ public class DiscoverView extends BorderPane {
         genreChipBar.setOnGenreSelected((genreId, genreName) -> {
             searchField.clear();
             isSearching = false;
-            if (GenreChipBar.isAllGenres(genreId)) {
-                currentGenreName = null;
-                currentSearchTerm = null;
-            } else {
-                currentGenreName = genreName;
-                currentSearchTerm = null;
-            }
+            isTrendingFullView = false;
+            currentGenreName = genreName;
+            currentSearchTerm = null;
             resetAndLoad();
         });
 
-        // initial load
+        // initial load — default to "新闻" genre
+        currentGenreName = "新闻";
+        loadTrending();
+        resetAndLoad();
+    }
+
+    // ==========================================
+    // Trending full view
+    // ==========================================
+    private void openTrendingFullView() {
+        isTrendingFullView = true;
+        topSection.setVisible(false);
+        topSection.setManaged(false);
+        backBar.setVisible(true);
+        backBar.setManaged(true);
+
+        loadedResults.clear();
+        shownCount = 0;
+        cardGrid.getChildren().clear();
+        hasMore = false;
+        isLoading = true;
+        loadingLabel.setText("正在加载...");
+        loadingLabel.setVisible(true);
+
+        executor.submit(() -> {
+            try {
+                List<Podcast> trending = searchService.getTrending(50);
+                Platform.runLater(() -> {
+                    loadedResults.addAll(trending);
+                    isLoading = false;
+                    showNextChunk();
+                });
+            } catch (Exception e) {
+                LOG.log(Level.ERROR, "Failed to load trending full: " + e.getMessage(), e);
+                Platform.runLater(() -> {
+                    isLoading = false;
+                    loadingLabel.setVisible(false);
+                });
+            }
+        });
+    }
+
+    private void closeTrendingFullView() {
+        isTrendingFullView = false;
+        backBar.setVisible(false);
+        backBar.setManaged(false);
+        topSection.setVisible(true);
+        topSection.setManaged(true);
         loadTrending();
         resetAndLoad();
     }
@@ -227,22 +287,9 @@ public class DiscoverView extends BorderPane {
         }
     }
 
-    private void toggleTrendingExpand() {
-        trendingExpanded = !trendingExpanded;
-        if (trendingExpanded) {
-            viewAllBtn.setText("收起 ←");
-            executor.submit(() -> {
-                List<Podcast> trending = searchService.getTrending(50);
-                Platform.runLater(() -> renderTrendingCards(trending));
-            });
-        } else {
-            viewAllBtn.setText("查看全部 →");
-            loadTrending();
-        }
-    }
-
     private void doSearch(String query) {
         isSearching = true;
+        isTrendingFullView = false;
         currentSearchTerm = query;
         currentGenreName = null;
         trendingSection.setVisible(false);
@@ -255,7 +302,7 @@ public class DiscoverView extends BorderPane {
     private void clearSearch() {
         isSearching = false;
         currentSearchTerm = null;
-        currentGenreName = null;
+        currentGenreName = "新闻";
         trendingSection.setVisible(true);
         trendingSection.setManaged(true);
         genreChipBar.setVisible(true);
@@ -392,15 +439,37 @@ public class DiscoverView extends BorderPane {
 
         Label titleLabel = new Label(podcast.getTitle());
         titleLabel.getStyleClass().add("discover-trending-title");
-        titleLabel.setWrapText(true);
         titleLabel.setMaxWidth(TRENDING_CARD_WIDTH);
-        titleLabel.setPrefHeight(32);
+        titleLabel.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
+        javafx.scene.control.Tooltip.install(titleLabel, new javafx.scene.control.Tooltip(podcast.getTitle()));
 
         Label authorLabel = new Label(podcast.getAuthor());
         authorLabel.getStyleClass().add("discover-trending-author");
         authorLabel.setMaxWidth(TRENDING_CARD_WIDTH);
 
-        card.getChildren().addAll(imagePane, titleLabel, authorLabel);
+        // text content with padding
+        VBox textBox = new VBox(4);
+        textBox.setPadding(new Insets(6, 6, 8, 6));
+        textBox.setAlignment(Pos.TOP_LEFT);
+        textBox.getChildren().addAll(titleLabel, authorLabel);
+
+        // genre chips — tiny, max 2
+        List<String> trendingGenres = podcast.getGenres();
+        if (trendingGenres != null && !trendingGenres.isEmpty()) {
+            HBox chipRow = new HBox(4);
+            chipRow.setAlignment(Pos.TOP_LEFT);
+            int count = 0;
+            for (String g : trendingGenres) {
+                if (count >= 2) break;
+                Label chip = new Label(g);
+                chip.getStyleClass().add("discover-trending-genre-chip");
+                chipRow.getChildren().add(chip);
+                count++;
+            }
+            textBox.getChildren().add(chipRow);
+        }
+
+        card.getChildren().addAll(imagePane, textBox);
         return card;
     }
 
@@ -411,18 +480,18 @@ public class DiscoverView extends BorderPane {
         VBox card = new VBox();
         card.setPrefWidth(GRID_CARD_WIDTH);
         card.setMaxWidth(GRID_CARD_WIDTH);
-        card.setAlignment(Pos.TOP_CENTER);
         card.getStyleClass().add("discover-grid-card");
         card.setOnMouseClicked(e -> {
             if (onPodcastSelected != null) onPodcastSelected.accept(podcast);
         });
 
+        // --- square image, same proportion as trending cards ---
         StackPane imagePane = new StackPane();
-        imagePane.setPrefSize(GRID_CARD_WIDTH, GRID_IMG_HEIGHT);
-        imagePane.setMinSize(GRID_CARD_WIDTH, GRID_IMG_HEIGHT);
-        imagePane.setMaxSize(GRID_CARD_WIDTH, GRID_IMG_HEIGHT);
+        imagePane.setPrefSize(GRID_CARD_WIDTH, GRID_IMG_SIZE);
+        imagePane.setMinSize(GRID_CARD_WIDTH, GRID_IMG_SIZE);
+        imagePane.setMaxSize(GRID_CARD_WIDTH, GRID_IMG_SIZE);
 
-        Rectangle clip = new Rectangle(GRID_CARD_WIDTH, GRID_IMG_HEIGHT);
+        Rectangle clip = new Rectangle(GRID_CARD_WIDTH, GRID_IMG_SIZE);
         clip.setArcWidth(10);
         clip.setArcHeight(10);
         imagePane.setClip(clip);
@@ -431,29 +500,120 @@ public class DiscoverView extends BorderPane {
         if (img != null) {
             ImageView imageView = new ImageView(img);
             imageView.setFitWidth(GRID_CARD_WIDTH);
-            imageView.setFitHeight(GRID_IMG_HEIGHT);
-            imageView.setPreserveRatio(false);
+            imageView.setFitHeight(GRID_IMG_SIZE);
+            imageView.setPreserveRatio(true);
             imageView.getStyleClass().add("discover-grid-image");
             imagePane.getChildren().add(imageView);
         } else {
-            Rectangle gradient = new Rectangle(GRID_CARD_WIDTH, GRID_IMG_HEIGHT);
+            Rectangle gradient = new Rectangle(GRID_CARD_WIDTH, GRID_IMG_SIZE);
             gradient.setFill(PodcastDetailView.gradientFor(podcast.getTitle()));
             imagePane.getChildren().add(gradient);
         }
 
+        // --- text content area ---
+        VBox textBox = new VBox(4);
+        textBox.setPadding(new Insets(8, 8, 0, 8));
+        textBox.setAlignment(Pos.TOP_LEFT);
+
+        // title — single line, ellipsis, tooltip for full name
         Label titleLabel = new Label(podcast.getTitle());
         titleLabel.getStyleClass().add("discover-grid-title");
-        titleLabel.setWrapText(true);
-        titleLabel.setMaxWidth(GRID_CARD_WIDTH - 24);
-        titleLabel.setAlignment(Pos.CENTER);
-        VBox.setMargin(titleLabel, new Insets(10, 10, 0, 10));
+        titleLabel.setMaxWidth(GRID_CARD_WIDTH - 16);
+        titleLabel.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
+        javafx.scene.control.Tooltip.install(titleLabel, new javafx.scene.control.Tooltip(podcast.getTitle()));
 
         Label authorLabel = new Label(podcast.getAuthor() != null ? podcast.getAuthor() : "");
         authorLabel.getStyleClass().add("discover-grid-author");
-        VBox.setMargin(authorLabel, new Insets(4, 0, 8, 0));
 
-        card.getChildren().addAll(imagePane, titleLabel, authorLabel);
+        textBox.getChildren().addAll(titleLabel, authorLabel);
+
+        // genre chips — small pill badges, max 3
+        List<String> displayGenres = podcast.getGenres();
+        if ((displayGenres == null || displayGenres.isEmpty())
+                && podcast.getPrimaryGenre() != null && !podcast.getPrimaryGenre().isBlank()) {
+            displayGenres = List.of(podcast.getPrimaryGenre());
+        }
+        if (displayGenres != null && !displayGenres.isEmpty()) {
+            HBox chipRow = new HBox(4);
+            chipRow.setAlignment(Pos.TOP_LEFT);
+            int count = 0;
+            for (String g : displayGenres) {
+                if (count >= 3) break;
+                Label chip = new Label(g);
+                chip.getStyleClass().add("discover-grid-genre-chip");
+                chipRow.getChildren().add(chip);
+                count++;
+            }
+            textBox.getChildren().add(chipRow);
+        }
+
+        // --- footer: dashed separator + date (left) / since badge (right) ---
+        String dateText = buildDateText(podcast);
+        SinceInfo since = timeSinceInfo(podcast.getReleaseDate());
+        if (!dateText.isBlank() || since != null) {
+            Separator footerSep = new Separator();
+            footerSep.getStyleClass().add("discover-grid-footer-sep");
+            VBox.setMargin(footerSep, new Insets(8, 0, 0, 0));
+
+            HBox footer = new HBox(6);
+            footer.setAlignment(Pos.CENTER_LEFT);
+            footer.setPadding(new Insets(6, 8, 10, 8));
+
+            if (!dateText.isBlank()) {
+                Label dateLabel = new Label(dateText);
+                dateLabel.getStyleClass().add("discover-grid-date");
+                footer.getChildren().add(dateLabel);
+            }
+
+            Region footerSpacer = new Region();
+            HBox.setHgrow(footerSpacer, Priority.ALWAYS);
+            footer.getChildren().add(footerSpacer);
+
+            if (since != null) {
+                Label sinceLabel = new Label(since.text);
+                sinceLabel.getStyleClass().add(since.styleClass);
+                footer.getChildren().add(sinceLabel);
+            }
+
+            card.getChildren().addAll(imagePane, textBox, footerSep, footer);
+        } else {
+            // no date info — still need bottom padding
+            textBox.setPadding(new Insets(8, 8, 10, 8));
+            card.getChildren().addAll(imagePane, textBox);
+        }
         return card;
+    }
+
+    private record SinceInfo(String text, String styleClass) {}
+
+    private static SinceInfo timeSinceInfo(String releaseDate) {
+        if (releaseDate == null || releaseDate.isBlank()) return null;
+        try {
+            java.time.Instant instant = java.time.Instant.parse(releaseDate);
+            ZonedDateTime then = instant.atZone(java.time.ZoneId.systemDefault());
+            ZonedDateTime now = ZonedDateTime.now();
+            long days = ChronoUnit.DAYS.between(then, now);
+            if (days < 60) return null; // still active — nothing noteworthy
+            long months = ChronoUnit.MONTHS.between(then, now);
+            if (months >= 12) {
+                long years = ChronoUnit.YEARS.between(then, now);
+                return new SinceInfo(years + "年未更新", "discover-grid-since-danger");
+            }
+            return new SinceInfo(months + "个月未更新", "discover-grid-since");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String buildDateText(Podcast p) {
+        if (p.getReleaseDate() == null || p.getReleaseDate().isBlank()) return "";
+        try {
+            java.time.Instant instant = java.time.Instant.parse(p.getReleaseDate());
+            ZonedDateTime dt = instant.atZone(java.time.ZoneId.systemDefault());
+            return "最新: " + dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private static Image loadImage(String url) {

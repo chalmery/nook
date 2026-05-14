@@ -74,10 +74,19 @@
     -fx-background-color: -color-bg-default;
     -fx-border-color: -color-border-muted;
     -fx-border-width: 1;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
     -fx-cursor: hand;
     -fx-padding: 0;
+}
+
+.podcast-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 16, 0, 0, 4);
+    -fx-translate-y: -2;
+}
+
+.podcast-card-image {
+    -fx-border-radius: 12;
 }
 
 .podcast-card-title {
@@ -86,10 +95,41 @@
     -fx-text-fill: -color-fg-default;
 }
 
-.podcast-card-updated {
+.podcast-card-author {
     -fx-font-size: 11px;
     -fx-text-fill: -color-fg-muted;
-    -fx-padding: 4 0 0 0;
+}
+
+.podcast-card-footer-sep {
+    -fx-padding: 0 8 0 8;
+}
+
+.podcast-card-footer-sep .line {
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1 0 0 0;
+    -fx-border-style: dashed;
+}
+
+.podcast-card-date {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.podcast-card-since {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-background-color: -color-bg-inset;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 4;
+}
+
+.podcast-card-since-danger {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-danger-fg;
+    -fx-font-weight: bold;
+    -fx-background-color: -color-danger-subtle;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 4;
 }
 
 /* === Podcast Detail === */
@@ -399,6 +439,27 @@
 .discover-trending-card {
     -fx-cursor: hand;
     -fx-padding: 0;
+    -fx-background-color: -color-bg-default;
+    -fx-background-radius: 12;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.discover-trending-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 10, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+
+.discover-trending-genre-chip {
+    -fx-background-color: -color-bg-inset;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-size: 8px;
+    -fx-padding: 1 5 1 5;
+    -fx-background-radius: 6;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
 }
 
 .discover-trending-image {
@@ -481,14 +542,19 @@
     -fx-background-color: -color-bg-default;
     -fx-border-color: -color-border-muted;
     -fx-border-width: 1;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
     -fx-cursor: hand;
     -fx-padding: 0;
 }
 
+.discover-grid-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 16, 0, 0, 4);
+    -fx-translate-y: -2;
+}
+
 .discover-grid-image {
-    -fx-border-radius: 10;
+    -fx-border-radius: 12;
 }
 
 .discover-grid-title {
@@ -500,7 +566,49 @@
 .discover-grid-author {
     -fx-font-size: 11px;
     -fx-text-fill: -color-fg-muted;
-    -fx-padding: 4 0 0 0;
+}
+
+.discover-grid-genre-chip {
+    -fx-background-color: -color-bg-inset;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-size: 9px;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 8;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.discover-grid-footer-sep {
+    -fx-padding: 0 8 0 8;
+}
+
+.discover-grid-footer-sep .line {
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1 0 0 0;
+    -fx-border-style: dashed;
+}
+
+.discover-grid-date {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.discover-grid-since {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-background-color: -color-bg-inset;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 4;
+}
+
+.discover-grid-since-danger {
+    -fx-font-size: 10px;
+    -fx-text-fill: -color-danger-fg;
+    -fx-font-weight: bold;
+    -fx-background-color: -color-danger-subtle;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 4;
 }
 
 /* Loading / empty */
@@ -539,6 +647,15 @@
     -fx-text-fill: -color-fg-muted;
 }
 
+.discover-detail-meta {
+    -fx-padding: 4 0 4 0;
+}
+
+.discover-detail-meta-line {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-muted;
+}
+
 .discover-detail-desc {
     -fx-font-size: 13px;
     -fx-text-fill: -color-fg-muted;
@@ -556,4 +673,32 @@
 
 .discover-detail-error {
     -fx-text-fill: -color-danger-fg;
+}
+
+/* === Settings View === */
+.settings-view {
+    -fx-background-color: -color-bg-default;
+}
+
+.settings-header {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.settings-toggle {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-fg-default;
+    -fx-padding: 0;
+}
+
+.settings-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.settings-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-default;
+    -fx-font-weight: bold;
 }

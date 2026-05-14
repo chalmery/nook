@@ -160,7 +160,22 @@ public class ITunesSearchService {
             p.setRssUrl(getString(obj, "feedUrl"));
             p.setImageUrl(getString(obj, "artworkUrl600"));
             if (p.getImageUrl() == null || p.getImageUrl().isBlank()) {
-                p.setImageUrl(getString(obj, "artworkUrl100"));
+                p.setImageUrl(upscaleArtworkUrl(getString(obj, "artworkUrl100")));
+            }
+            p.setPrimaryGenre(getString(obj, "primaryGenreName"));
+            p.setReleaseDate(getString(obj, "releaseDate"));
+            p.setTrackCount(getInt(obj, "trackCount"));
+
+            JsonArray genreArray = obj.getAsJsonArray("genres");
+            if (genreArray != null) {
+                List<String> genreList = new ArrayList<>();
+                for (JsonElement g : genreArray) {
+                    String genreName = g.getAsString();
+                    if (genreName != null && !genreName.equals("Podcasts")) {
+                        genreList.add(genreName);
+                    }
+                }
+                p.setGenres(genreList);
             }
             results.add(p);
         }
@@ -181,15 +196,34 @@ public class ITunesSearchService {
             Podcast p = new Podcast();
             p.setTitle(getString(obj, "name"));
             p.setAuthor(getString(obj, "artistName"));
-            p.setImageUrl(getString(obj, "artworkUrl100"));
+            p.setImageUrl(upscaleArtworkUrl(getString(obj, "artworkUrl100")));
             // Trending API doesn't provide feedUrl — store the collection ID for later lookup
             String id = getString(obj, "id");
             if (id != null && !id.isBlank()) {
-                p.setLink(id); // stash collection ID in link field temporarily
+                p.setLink(id);
+            }
+            // parse genres array
+            JsonArray genreArray = obj.getAsJsonArray("genres");
+            if (genreArray != null) {
+                List<String> genreList = new ArrayList<>();
+                for (JsonElement g : genreArray) {
+                    JsonObject genreObj = g.getAsJsonObject();
+                    String genreName = getString(genreObj, "name");
+                    if (genreName != null && !genreName.isBlank()) {
+                        genreList.add(genreName);
+                    }
+                }
+                p.setGenres(genreList);
             }
             results.add(p);
         }
         return results;
+    }
+
+    /** Replace 100x100bb with 600x600bb in Apple artwork URLs for higher resolution. */
+    private static String upscaleArtworkUrl(String url) {
+        if (url == null || url.isBlank()) return url;
+        return url.replace("100x100bb", "600x600bb");
     }
 
     private static String getString(JsonObject obj, String key) {
@@ -197,5 +231,12 @@ public class ITunesSearchService {
             return obj.get(key).getAsString();
         }
         return null;
+    }
+
+    private static int getInt(JsonObject obj, String key) {
+        if (obj.has(key) && !obj.get(key).isJsonNull()) {
+            return obj.get(key).getAsInt();
+        }
+        return 0;
     }
 }

@@ -42,8 +42,6 @@ public class GenreChipBar extends VBox {
         GENRES.put("哲学", 1384);
     }
 
-    static final int ALL_GENRES = -1;
-
     private final List<Button> chips = new ArrayList<>();
     private BiConsumer<Integer, String> onGenreSelected;
 
@@ -58,14 +56,13 @@ public class GenreChipBar extends VBox {
         chipPane.setPadding(new Insets(4, 0, 4, 0));
         chipPane.getStyleClass().add("discover-genre-flow");
 
-        // "全部" chip first, selected by default
-        Button allChip = createChip("全部", ALL_GENRES, "全部");
-        allChip.getStyleClass().add("discover-genre-chip-active");
-        chips.add(allChip);
-        chipPane.getChildren().add(allChip);
-
+        boolean first = true;
         for (var entry : GENRES.entrySet()) {
             Button chip = createChip(entry.getKey(), entry.getValue(), entry.getKey());
+            if (first) {
+                chip.getStyleClass().add("discover-genre-chip-active");
+                first = false;
+            }
             chips.add(chip);
             chipPane.getChildren().add(chip);
         }
@@ -91,6 +88,4 @@ public class GenreChipBar extends VBox {
     }
 
     public void setOnGenreSelected(BiConsumer<Integer, String> handler) { this.onGenreSelected = handler; }
-
-    public static boolean isAllGenres(int genreId) { return genreId == ALL_GENRES; }
 }

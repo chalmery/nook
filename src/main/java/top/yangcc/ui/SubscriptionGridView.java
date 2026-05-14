@@ -5,6 +5,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -18,7 +19,9 @@ import top.yangcc.model.Podcast;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
-import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
@@ -103,55 +106,124 @@ public class SubscriptionGridView extends BorderPane {
     // --- card ---
     private static class PodcastCard extends VBox {
 
-        private static final double CARD_WIDTH = 180;
-        private static final double IMG_HEIGHT = 140;
+        private static final double CARD_WIDTH = 190;
+        private static final double IMG_SIZE = 190;
 
         PodcastCard(Podcast podcast) {
             setPrefWidth(CARD_WIDTH);
             setMaxWidth(CARD_WIDTH);
-            setAlignment(Pos.TOP_CENTER);
             getStyleClass().add("podcast-card");
 
-            // image area — full width, edge-to-edge at top
+            // square image, edge-to-edge at top
             StackPane imagePane = new StackPane();
-            imagePane.setPrefSize(CARD_WIDTH, IMG_HEIGHT);
-            imagePane.setMinSize(CARD_WIDTH, IMG_HEIGHT);
-            imagePane.setMaxSize(CARD_WIDTH, IMG_HEIGHT);
+            imagePane.setPrefSize(CARD_WIDTH, IMG_SIZE);
+            imagePane.setMinSize(CARD_WIDTH, IMG_SIZE);
+            imagePane.setMaxSize(CARD_WIDTH, IMG_SIZE);
 
-            Rectangle clip = new Rectangle(CARD_WIDTH, IMG_HEIGHT);
-            clip.setArcWidth(10);
-            clip.setArcHeight(10);
+            Rectangle clip = new Rectangle(CARD_WIDTH, IMG_SIZE);
+            clip.setArcWidth(12);
+            clip.setArcHeight(12);
             imagePane.setClip(clip);
 
             Image img = loadImage(podcast.getImageUrl());
             if (img != null) {
                 ImageView imageView = new ImageView(img);
                 imageView.setFitWidth(CARD_WIDTH);
-                imageView.setFitHeight(IMG_HEIGHT);
-                imageView.setPreserveRatio(false);
+                imageView.setFitHeight(IMG_SIZE);
+                imageView.setPreserveRatio(true);
                 imageView.getStyleClass().add("podcast-card-image");
                 imagePane.getChildren().add(imageView);
             } else {
-                Rectangle gradient = new Rectangle(CARD_WIDTH, IMG_HEIGHT);
+                Rectangle gradient = new Rectangle(CARD_WIDTH, IMG_SIZE);
                 gradient.setFill(gradientFor(podcast.getTitle()));
                 imagePane.getChildren().add(gradient);
             }
 
-            // title — padded below image
+            // --- text content area ---
+            VBox textBox = new VBox(4);
+            textBox.setPadding(new Insets(8, 8, 0, 8));
+            textBox.setAlignment(Pos.TOP_LEFT);
+
             Label titleLabel = new Label(podcast.getTitle());
             titleLabel.getStyleClass().add("podcast-card-title");
-            titleLabel.setWrapText(true);
-            titleLabel.setMaxWidth(CARD_WIDTH - 24);
-            titleLabel.setAlignment(Pos.CENTER);
-            VBox.setMargin(titleLabel, new Insets(10, 10, 0, 10));
+            titleLabel.setMaxWidth(CARD_WIDTH - 16);
+            titleLabel.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
+            javafx.scene.control.Tooltip.install(titleLabel, new javafx.scene.control.Tooltip(podcast.getTitle()));
 
-            // updated time
-            String updated = formatUpdated(podcast.getEpisodes());
-            Label updatedLabel = new Label(updated);
-            updatedLabel.getStyleClass().add("podcast-card-updated");
-            VBox.setMargin(updatedLabel, new Insets(4, 0, 8, 0));
+            String author = podcast.getAuthor() != null ? podcast.getAuthor() : "";
+            Label authorLabel = new Label(author);
+            authorLabel.getStyleClass().add("podcast-card-author");
 
-            getChildren().addAll(imagePane, titleLabel, updatedLabel);
+            textBox.getChildren().addAll(titleLabel, authorLabel);
+
+            // --- footer: dashed separator + date (left) / since badge (right) ---
+            Separator footerSep = new Separator();
+            footerSep.getStyleClass().add("podcast-card-footer-sep");
+            VBox.setMargin(footerSep, new Insets(8, 0, 0, 0));
+
+            HBox footer = new HBox(6);
+            footer.setAlignment(Pos.CENTER_LEFT);
+            footer.setPadding(new Insets(6, 8, 10, 8));
+
+            Date latestPubDate = latestPubDate(podcast.getEpisodes());
+            String dateText = buildDateText(latestPubDate);
+            if (!dateText.isBlank()) {
+                Label dateLabel = new Label(dateText);
+                dateLabel.getStyleClass().add("podcast-card-date");
+                footer.getChildren().add(dateLabel);
+            }
+
+            Region footerSpacer = new Region();
+            HBox.setHgrow(footerSpacer, Priority.ALWAYS);
+            footer.getChildren().add(footerSpacer);
+
+            SinceInfo since = timeSinceInfo(latestPubDate);
+            if (since != null) {
+                Label sinceLabel = new Label(since.text);
+                sinceLabel.getStyleClass().add(since.styleClass);
+                footer.getChildren().add(sinceLabel);
+            }
+
+            getChildren().addAll(imagePane, textBox, footerSep, footer);
+        }
+
+        private static Date latestPubDate(List<Episode> episodes) {
+            if (episodes == null || episodes.isEmpty()) return null;
+            Date latest = null;
+            for (Episode ep : episodes) {
+                if (ep.getPubDate() != null) {
+                    if (latest == null || ep.getPubDate().after(latest)) {
+                        latest = ep.getPubDate();
+                    }
+                }
+            }
+            return latest;
+        }
+
+        private static String buildDateText(Date pubDate) {
+            if (pubDate == null) return "";
+            return "最新: " + DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                    .format(pubDate.toInstant().atZone(java.time.ZoneId.systemDefault()));
+        }
+
+        private record SinceInfo(String text, String styleClass) {}
+
+        private static SinceInfo timeSinceInfo(Date pubDate) {
+            if (pubDate == null) return null;
+            try {
+                ZonedDateTime then = pubDate.toInstant().atZone(java.time.ZoneId.systemDefault());
+                ZonedDateTime now = ZonedDateTime.now();
+                long days = ChronoUnit.DAYS.between(then, now);
+                if (days < 60) return null;
+                long months = ChronoUnit.MONTHS.between(then, now);
+                if (months >= 12) {
+                    long years = ChronoUnit.YEARS.between(then, now);
+                    return new SinceInfo(years + "年未更新", "podcast-card-since-danger");
+                }
+                return new SinceInfo(months + "个月未更新", "podcast-card-since");
+            } catch (Exception e) {
+                return null;
+            }
         }
 
         private static LinearGradient gradientFor(String seed) {
@@ -170,20 +242,6 @@ public class SubscriptionGridView extends BorderPane {
             } catch (Exception e) {
                 return null;
             }
-        }
-
-        private static String formatUpdated(List<Episode> episodes) {
-            if (episodes == null || episodes.isEmpty()) return "暂无更新";
-            Date latest = null;
-            for (Episode ep : episodes) {
-                if (ep.getPubDate() != null) {
-                    if (latest == null || ep.getPubDate().after(latest)) {
-                        latest = ep.getPubDate();
-                    }
-                }
-            }
-            if (latest == null) return "暂无更新";
-            return "更新于 " + new SimpleDateFormat("yyyy-MM-dd").format(latest);
         }
     }
 

@@ -4,7 +4,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import top.yangcc.model.Episode;
 import top.yangcc.model.Podcast;
@@ -28,6 +27,7 @@ public class MainLayout extends BorderPane {
     private final DiscoverView discoverView;
     private final DiscoverDetailView discoverDetailView;
     private final PodcastDetailView detailView;
+    private final SettingsView settingsView;
     private final PlayerBar playerBar;
 
     private Podcast selectedPodcast;
@@ -51,6 +51,7 @@ public class MainLayout extends BorderPane {
         discoverView = new DiscoverView();
         discoverDetailView = new DiscoverDetailView();
         detailView = new PodcastDetailView();
+        settingsView = new SettingsView();
         playerBar = new PlayerBar();
 
         buildLayout();
@@ -62,7 +63,7 @@ public class MainLayout extends BorderPane {
 
     private void buildLayout() {
         setLeft(sidebar);
-        setCenter(gridView);
+        setCenter(discoverView);
         setBottom(playerBar);
     }
 
@@ -95,8 +96,8 @@ public class MainLayout extends BorderPane {
                     showGridView();
                     break;
                 case SETTINGS:
-                    LOG.log(Level.INFO, "Open settings");
-                    SettingsDialog.show((Stage) getScene().getWindow());
+                    LOG.log(Level.INFO, "Navigate to settings view");
+                    setCenter(settingsView);
                     break;
                 default:
                     break;

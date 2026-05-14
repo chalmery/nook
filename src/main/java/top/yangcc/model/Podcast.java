@@ -14,6 +14,10 @@ public class Podcast {
     private String link;
     private String language;
     private String copyright;
+    private String primaryGenre;
+    private List<String> genres = new ArrayList<>();
+    private String releaseDate;
+    private int trackCount;
     private List<Episode> episodes = new ArrayList<>();
 
     public Podcast() {}
@@ -44,6 +48,18 @@ public class Podcast {
 
     public String getCopyright() { return copyright; }
     public void setCopyright(String copyright) { this.copyright = copyright; }
+
+    public String getPrimaryGenre() { return primaryGenre; }
+    public void setPrimaryGenre(String primaryGenre) { this.primaryGenre = primaryGenre; }
+
+    public List<String> getGenres() { return genres; }
+    public void setGenres(List<String> genres) { this.genres = genres; }
+
+    public String getReleaseDate() { return releaseDate; }
+    public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
+
+    public int getTrackCount() { return trackCount; }
+    public void setTrackCount(int trackCount) { this.trackCount = trackCount; }
 
     public List<Episode> getEpisodes() { return episodes; }
     public void setEpisodes(List<Episode> episodes) { this.episodes = episodes; }
