@@ -187,9 +187,8 @@ public class MainLayout extends BorderPane {
             return;
         }
         if (!audioPlayer.isAvailable()) {
-            showErrorAlert("无法播放", "VLC 未安装或初始化失败",
-                    "请安装 VLC：sudo dnf install vlc\n\n" +
-                            (audioPlayer.getInitError() != null ? audioPlayer.getInitError() : ""));
+            showErrorAlert("无法播放", "音频引擎初始化失败",
+                    audioPlayer.getInitError() != null ? audioPlayer.getInitError() : "");
             return;
         }
 

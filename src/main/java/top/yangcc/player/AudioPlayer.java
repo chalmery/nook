@@ -7,6 +7,11 @@ import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 
 public class AudioPlayer {
 
@@ -18,9 +23,63 @@ public class AudioPlayer {
     private String initError;
     private Runnable onStatusChanged;
 
+    private static String platformDir() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String arch = System.getProperty("os.arch").contains("64") ? "x86_64" : "x86";
+        if (os.contains("linux")) return "linux-" + arch;
+        if (os.contains("mac")) return "macos-" + arch;
+        if (os.contains("win")) return "windows-" + arch;
+        return null;
+    }
+
+    /** Resolve a candidate native directory, returning its absolute path if it exists. */
+    private static String tryPath(Path dir) {
+        if (dir != null && Files.isDirectory(dir)) {
+            return dir.toAbsolutePath().toString();
+        }
+        return null;
+    }
+
+    private static String detectNativePath() {
+        String platform = platformDir();
+        if (platform == null) return null;
+
+        // 1. Already set via jpackage --java-options or env
+        if (System.getProperty("jna.library.path") != null) return null;
+
+        // 2. CWD-relative (dev mode: mvn javafx:run, or jpackage Linux/Windows)
+        String result = tryPath(Path.of("native", platform));
+        if (result != null) return result;
+
+        // 3. Relative to the jar location (jpackage macOS .app, or any jlink image)
+        try {
+            ProtectionDomain pd = AudioPlayer.class.getProtectionDomain();
+            if (pd != null) {
+                CodeSource cs = pd.getCodeSource();
+                if (cs != null) {
+                    URL loc = cs.getLocation();
+                    if (loc != null) {
+                        Path jarDir = Path.of(loc.toURI()).getParent();
+                        result = tryPath(jarDir.resolveSibling("native").resolve(platform));
+                        if (result != null) return result;
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+            // not available in all environments
+        }
+
+        return null;
+    }
+
     public AudioPlayer() {
         LOG.log(Level.INFO, "Initializing VLCJ AudioPlayer...");
         try {
+            String nativePath = detectNativePath();
+            if (nativePath != null) {
+                LOG.log(Level.INFO, "Bundled VLC native path: {0}", nativePath);
+                System.setProperty("jna.library.path", nativePath);
+            }
             factory = new MediaPlayerFactory("--no-video");
             mediaPlayer = factory.mediaPlayers().newMediaPlayer();
             available = true;
@@ -160,6 +219,7 @@ public class AudioPlayer {
 
     public void release() {
         LOG.log(Level.INFO, "Releasing VLCJ resources");
+        available = false;
         if (mediaPlayer != null) mediaPlayer.release();
         if (factory != null) factory.release();
     }

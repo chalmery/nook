@@ -1,0 +1,385 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  JAVA_VERSION: '25'
+  JAVAFX_VERSION: '26.0.1'
+  VLC_VERSION: '3.0.21'
+
+jobs:
+  # ════════════════════════════════════════════════════════════════
+  #  Linux — Debian / Ubuntu / Mint 系
+  # ════════════════════════════════════════════════════════════════
+  build-deb:
+    name: linux-deb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: maven-deb-${{ hashFiles('pom.xml') }}
+          restore-keys: maven-deb-
+
+      - name: Install VLC
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq vlc
+
+      - name: Bundle VLC natives
+        run: |
+          SRC="/usr/lib/x86_64-linux-gnu"
+          PLAT="linux-x86_64"
+          mkdir -p "native/$PLAT"
+          cp -L "$SRC/libvlc.so.5.6.1"    "native/$PLAT/"
+          cp -L "$SRC/libvlccore.so.9.0.1" "native/$PLAT/"
+          cd "native/$PLAT"
+          ln -sf libvlc.so.5.6.1    libvlc.so.5
+          ln -sf libvlc.so.5        libvlc.so
+          ln -sf libvlccore.so.9.0.1 libvlccore.so.9
+          ln -sf libvlccore.so.9    libvlccore.so
+          cd -
+          cp -r "$SRC/vlc/plugins" "native/$PLAT/plugins"
+          echo "=== Bundled ($PLAT) ===" && du -sh "native/$PLAT/"
+
+      - name: Build application
+        run: |
+          mvn package -DskipTests -q
+          mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=target/deps -q
+          cp target/nook-*.jar target/deps/
+
+      - name: Download JavaFX jmods
+        run: |
+          curl -L -o javafx-jmods.zip \
+            "https://download2.gluonhq.com/openjfx/${{ env.JAVAFX_VERSION }}/openjfx-${{ env.JAVAFX_VERSION }}_linux-x64_bin-jmods.zip"
+          unzip -q javafx-jmods.zip -d javafx-jmods && rm javafx-jmods.zip
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package (.deb)
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          MAIN_JAR=$(basename target/deps/nook-*.jar)
+          JMOD_DIR=$(ls -d javafx-jmods/javafx-jmods-*/ | head -1)
+
+          jpackage \
+            --name Nook \
+            --app-version "${VERSION}" \
+            --description "Podcast player" \
+            --input target/deps \
+            --main-jar "${MAIN_JAR}" \
+            --main-class top.yangcc.NookApp \
+            --type deb \
+            --linux-package-name nook \
+            --linux-deb-maintainer "nook@example.com" \
+            --app-content native/ \
+            --module-path "${JMOD_DIR}" \
+            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --dest dist \
+            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
+            --java-options "-Dprism.lcdtext=false" \
+            --java-options "-Dprism.forceGPU=true" \
+            --java-options "-Djavafx.ime=true" \
+            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          echo "=== Package ===" && ls -lh dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nook-linux-deb-${{ steps.version.outputs.VERSION }}
+          path: dist/*
+
+  # ════════════════════════════════════════════════════════════════
+  #  Linux — Fedora / RHEL / CentOS 系
+  # ════════════════════════════════════════════════════════════════
+  build-rpm:
+    name: linux-rpm
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: /root/.m2
+          key: maven-rpm-${{ hashFiles('pom.xml') }}
+          restore-keys: maven-rpm-
+
+      - name: Install VLC and tools
+        run: |
+          dnf install -y --setopt=install_weak_deps=False git
+          dnf install -y --setopt=install_weak_deps=False \
+            "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
+          dnf install -y --setopt=install_weak_deps=False \
+            vlc maven rpm-build
+
+      - name: Bundle VLC natives
+        run: |
+          SRC="/usr/lib64"
+          PLAT="linux-x86_64"
+          mkdir -p "native/$PLAT"
+          cp -L "$SRC/libvlc.so.5.6.1"    "native/$PLAT/"
+          cp -L "$SRC/libvlccore.so.9.0.1" "native/$PLAT/"
+          cd "native/$PLAT"
+          ln -sf libvlc.so.5.6.1    libvlc.so.5
+          ln -sf libvlc.so.5        libvlc.so
+          ln -sf libvlccore.so.9.0.1 libvlccore.so.9
+          ln -sf libvlccore.so.9    libvlccore.so
+          cd -
+          cp -r "$SRC/vlc/plugins" "native/$PLAT/plugins"
+          echo "=== Bundled ($PLAT) ===" && du -sh "native/$PLAT/"
+
+      - name: Build application
+        run: |
+          mvn package -DskipTests -q
+          mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=target/deps -q
+          cp target/nook-*.jar target/deps/
+
+      - name: Download JavaFX jmods
+        run: |
+          curl -L -o javafx-jmods.zip \
+            "https://download2.gluonhq.com/openjfx/${{ env.JAVAFX_VERSION }}/openjfx-${{ env.JAVAFX_VERSION }}_linux-x64_bin-jmods.zip"
+          unzip -q javafx-jmods.zip -d javafx-jmods && rm javafx-jmods.zip
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package (.rpm)
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          MAIN_JAR=$(basename target/deps/nook-*.jar)
+          JMOD_DIR=$(ls -d javafx-jmods/javafx-jmods-*/ | head -1)
+
+          jpackage \
+            --name Nook \
+            --app-version "${VERSION}" \
+            --description "Podcast player" \
+            --input target/deps \
+            --main-jar "${MAIN_JAR}" \
+            --main-class top.yangcc.NookApp \
+            --type rpm \
+            --linux-package-name nook \
+            --app-content native/ \
+            --module-path "${JMOD_DIR}" \
+            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --dest dist \
+            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
+            --java-options "-Dprism.lcdtext=false" \
+            --java-options "-Dprism.forceGPU=true" \
+            --java-options "-Djavafx.ime=true" \
+            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          echo "=== Package ===" && ls -lh dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nook-linux-rpm-${{ steps.version.outputs.VERSION }}
+          path: dist/*
+
+  # ════════════════════════════════════════════════════════════════
+  #  macOS — Apple Silicon + Intel
+  # ════════════════════════════════════════════════════════════════
+  build-macos:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos-arm
+            runner: macos-latest
+            javafx-arch: osx-aarch64
+            vlc-arch: arm64
+            platform: macos-aarch64
+          - name: macos-intel
+            runner: macos-13
+            javafx-arch: osx-x64
+            vlc-arch: intel64
+            platform: macos-x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: maven-${{ matrix.name }}-${{ hashFiles('pom.xml') }}
+          restore-keys: maven-${{ matrix.name }}-
+
+      - name: Download and extract VLC
+        run: |
+          VLC_URL="https://get.videolan.org/vlc/${{ env.VLC_VERSION }}/macosx/vlc-${{ env.VLC_VERSION }}-${{ matrix.vlc-arch }}.dmg"
+          echo "Downloading $VLC_URL"
+          curl -L -o vlc.dmg "$VLC_URL"
+
+          hdiutil attach vlc.dmg -mountpoint /tmp/vlc-mount -nobrowse -quiet
+
+          mkdir -p "native/${{ matrix.platform }}"
+          cp /tmp/vlc-mount/VLC.app/Contents/MacOS/lib/libvlc.dylib     "native/${{ matrix.platform }}/"
+          cp /tmp/vlc-mount/VLC.app/Contents/MacOS/lib/libvlccore.dylib "native/${{ matrix.platform }}/"
+          cp -r /tmp/vlc-mount/VLC.app/Contents/MacOS/plugins           "native/${{ matrix.platform }}/plugins"
+
+          hdiutil detach /tmp/vlc-mount -quiet && rm -f vlc.dmg
+          echo "=== Bundled (${{ matrix.platform }}) ===" && du -sh "native/${{ matrix.platform }}/"
+
+      - name: Build application
+        run: |
+          mvn package -DskipTests -q
+          mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=target/deps -q
+          cp target/nook-*.jar target/deps/
+
+      - name: Download JavaFX jmods
+        run: |
+          curl -L -o javafx-jmods.zip \
+            "https://download2.gluonhq.com/openjfx/${{ env.JAVAFX_VERSION }}/openjfx-${{ env.JAVAFX_VERSION }}_${{ matrix.javafx-arch }}_bin-jmods.zip"
+          unzip -q javafx-jmods.zip -d javafx-jmods && rm javafx-jmods.zip
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package (.dmg)
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          MAIN_JAR=$(basename target/deps/nook-*.jar)
+          JMOD_DIR=$(ls -d javafx-jmods/javafx-jmods-*/ | head -1)
+
+          jpackage \
+            --name Nook \
+            --app-version "${VERSION}" \
+            --description "Podcast player" \
+            --input target/deps \
+            --main-jar "${MAIN_JAR}" \
+            --main-class top.yangcc.NookApp \
+            --type dmg \
+            --app-content native/ \
+            --module-path "${JMOD_DIR}" \
+            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --dest dist \
+            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
+            --java-options "-Dprism.lcdtext=false" \
+            --java-options "-Dprism.forceGPU=true" \
+            --java-options "-Djavafx.ime=true" \
+            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          echo "=== Package ===" && ls -lh dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nook-${{ matrix.name }}-${{ steps.version.outputs.VERSION }}
+          path: dist/*
+
+  # ════════════════════════════════════════════════════════════════
+  #  Windows
+  # ════════════════════════════════════════════════════════════════
+  build-windows:
+    name: windows-msi
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: maven-windows-${{ hashFiles('pom.xml') }}
+          restore-keys: maven-windows-
+
+      - name: Install VLC and Maven
+        shell: pwsh
+        run: |
+          choco install vlc maven -y --no-progress
+          $dest = "native/windows-x86_64"
+          New-Item -ItemType Directory -Force -Path "$dest"
+          Copy-Item "C:\Program Files\VideoLAN\VLC\libvlc.dll"     "$dest\"
+          Copy-Item "C:\Program Files\VideoLAN\VLC\libvlccore.dll" "$dest\"
+          Copy-Item "C:\Program Files\VideoLAN\VLC\plugins"        "$dest\plugins" -Recurse
+          Write-Host "=== Bundled (windows-x86_64) ==="
+          Get-ChildItem "$dest" | Select-Object Name,Length
+
+      - name: Build application
+        run: |
+          mvn package -DskipTests -q
+          mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=target/deps -q
+          Copy-Item target/nook-*.jar target/deps/
+
+      - name: Download JavaFX jmods
+        shell: pwsh
+        run: |
+          curl -L -o javafx-jmods.zip `
+            "https://download2.gluonhq.com/openjfx/${{ env.JAVAFX_VERSION }}/openjfx-${{ env.JAVAFX_VERSION }}_windows-x64_bin-jmods.zip"
+          Expand-Archive -Path javafx-jmods.zip -DestinationPath javafx-jmods
+          Remove-Item javafx-jmods.zip
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Package (.msi)
+        run: |
+          $VERSION = "${{ steps.version.outputs.VERSION }}"
+          $MAIN_JAR = (Get-ChildItem target/deps/nook-*.jar | Select-Object -First 1).Name
+          $JMOD_DIR = (Get-ChildItem -Directory javafx-jmods/javafx-jmods-* | Select-Object -First 1).FullName
+
+          jpackage `
+            --name Nook `
+            --app-version "$VERSION" `
+            --description "Podcast player" `
+            --input target/deps `
+            --main-jar "$MAIN_JAR" `
+            --main-class top.yangcc.NookApp `
+            --type msi `
+            --win-menu `
+            --win-menu-group Nook `
+            --app-content native/ `
+            --module-path "$JMOD_DIR" `
+            --add-modules javafx.controls,javafx.base,javafx.graphics `
+            --dest dist `
+            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" `
+            --java-options "-Dprism.lcdtext=false" `
+            --java-options "-Dprism.forceGPU=true" `
+            --java-options "-Djavafx.ime=true" `
+            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          echo "=== Package ==="
+          Get-ChildItem dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nook-windows-msi-${{ steps.version.outputs.VERSION }}
+          path: dist/*

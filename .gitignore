@@ -18,6 +18,9 @@ dependency-reduced-pom.xml
 .DS_Store
 Thumbs.db
 
+# Bundled VLC native libraries (fetched by CI)
+native/
+
 # App data (user-specific)
 .nook/
 .claude

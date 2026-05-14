@@ -52,10 +52,44 @@ public class NookApp extends Application {
     }
 
     public static void main(String[] args) {
+        setupInputMethod();
         System.setProperty("prism.lcdtext", "true");
         System.setProperty("prism.subpixeltext", "true");
         System.setProperty("prism.forceGPU", "true");
         LOG.log(Level.INFO, "Prism properties set: lcdtext=true, subpixeltext=true, forceGPU=true");
         launch(args);
+    }
+
+    private static void setupInputMethod() {
+        if (System.getProperty("im.module") != null) return;
+        String module = detectInputMethod();
+        if (module != null) {
+            System.setProperty("im.module", module);
+            LOG.log(Level.INFO, "Input method auto-detected: {0}", module);
+        }
+    }
+
+    private static String detectInputMethod() {
+        String gtkIM = System.getenv("GTK_IM_MODULE");
+        String qtIM = System.getenv("QT_IM_MODULE");
+        String xmod = System.getenv("XMODIFIERS");
+
+        if (containsIgnoreCase(gtkIM, "fcitx") || containsIgnoreCase(qtIM, "fcitx") || containsIgnoreCase(xmod, "fcitx"))
+            return "fcitx";
+        if (containsIgnoreCase(gtkIM, "ibus") || containsIgnoreCase(qtIM, "ibus") || containsIgnoreCase(xmod, "ibus"))
+            return "ibus";
+
+        try {
+            if (ProcessHandle.allProcesses().anyMatch(p -> p.info().command().orElse("").contains("fcitx5")))
+                return "fcitx";
+            if (ProcessHandle.allProcesses().anyMatch(p -> p.info().command().orElse("").contains("ibus-daemon")))
+                return "ibus";
+        } catch (Exception ignore) { }
+
+        return null;
+    }
+
+    private static boolean containsIgnoreCase(String s, String sub) {
+        return s != null && s.toLowerCase().contains(sub);
     }
 }
