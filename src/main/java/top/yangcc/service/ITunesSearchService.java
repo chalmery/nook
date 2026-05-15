@@ -20,7 +20,7 @@ public class ITunesSearchService {
     private static final Logger LOG = System.getLogger("top.yangcc.itunes");
 
     private static final String SEARCH_URL = "https://itunes.apple.com/search";
-    private static final String LOOKUP_URL = "https://itunes.apple.com/lookup";
+    private static final String LOOKUP_URL = "n";
     private static final String TRENDING_URL = "https://rss.marketingtools.apple.com/api/v2/cn/podcasts/top/%d/podcasts.json";
 
     private static final String COUNTRY = "cn";
@@ -98,6 +98,15 @@ public class ITunesSearchService {
      * Looks up a podcast by iTunes collection ID to get its feedUrl.
      */
     public String lookupFeedUrl(String collectionId) {
+        Podcast p = lookupPodcast(collectionId);
+        return p != null ? p.getRssUrl() : null;
+    }
+
+    /**
+     * Full podcast lookup by iTunes collection ID. Returns all available metadata
+     * including description, releaseDate, trackCount, and more.
+     */
+    public Podcast lookupPodcast(String collectionId) {
         String url = LOOKUP_URL + "?id=" + collectionId
                 + "&country=" + COUNTRY
                 + "&media=" + MEDIA
@@ -110,18 +119,59 @@ public class ITunesSearchService {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) return null;
-            JsonObject root = gson.fromJson(response.body(), JsonObject.class);
-            JsonArray results = root.getAsJsonArray("results");
-            if (results != null && !results.isEmpty()) {
-                JsonObject first = results.get(0).getAsJsonObject();
-                if (first.has("feedUrl")) {
-                    return first.get("feedUrl").getAsString();
+            String json = response.body();
+            List<Podcast> results = parseSearchResponse(json);
+            if (!results.isEmpty()) {
+                Podcast p = results.get(0);
+                // Save the collection ID for later use
+                if (p.getLink() == null || p.getLink().isBlank()) {
+                    p.setLink(collectionId);
                 }
+                return p;
             }
         } catch (Exception e) {
-            LOG.log(Level.ERROR, "Failed to lookup feedUrl for " + collectionId + ": " + e.getMessage(), e);
+            LOG.log(Level.ERROR, "Failed to lookup podcast " + collectionId + ": " + e.getMessage(), e);
         }
         return null;
+    }
+
+    /**
+     * Enriches an existing Podcast with data from the iTunes Lookup API.
+     * Thread-safe: returns a new Podcast if lookup succeeds, or the original if it fails.
+     */
+    public Podcast enrichPodcast(Podcast podcast) {
+        String collectionId = podcast.getLink();
+        if (collectionId == null || collectionId.isBlank()) return podcast;
+        Podcast lookedUp = lookupPodcast(collectionId);
+        if (lookedUp == null) return podcast;
+
+        // Merge lookup data into existing podcast, preferring non-null lookup values
+        if (podcast.getRssUrl() == null || podcast.getRssUrl().isBlank()) {
+            podcast.setRssUrl(lookedUp.getRssUrl());
+        }
+        if (podcast.getImageUrl() == null || podcast.getImageUrl().isBlank()) {
+            podcast.setImageUrl(lookedUp.getImageUrl());
+        }
+        if (podcast.getPrimaryGenre() == null || podcast.getPrimaryGenre().isBlank()) {
+            podcast.setPrimaryGenre(lookedUp.getPrimaryGenre());
+        }
+        if (podcast.getReleaseDate() == null || podcast.getReleaseDate().isBlank()) {
+            podcast.setReleaseDate(lookedUp.getReleaseDate());
+        }
+        if (podcast.getTrackCount() == 0) {
+            podcast.setTrackCount(lookedUp.getTrackCount());
+        }
+        if ((podcast.getGenres() == null || podcast.getGenres().isEmpty())
+                && lookedUp.getGenres() != null && !lookedUp.getGenres().isEmpty()) {
+            podcast.setGenres(lookedUp.getGenres());
+        }
+        if (podcast.getDescription() == null || podcast.getDescription().isBlank()) {
+            podcast.setDescription(lookedUp.getDescription());
+        }
+        if (podcast.getCopyright() == null || podcast.getCopyright().isBlank()) {
+            podcast.setCopyright(lookedUp.getCopyright());
+        }
+        return podcast;
     }
 
     private List<Podcast> fetchAndParse(String url) {
@@ -165,6 +215,9 @@ public class ITunesSearchService {
             p.setPrimaryGenre(getString(obj, "primaryGenreName"));
             p.setReleaseDate(getString(obj, "releaseDate"));
             p.setTrackCount(getInt(obj, "trackCount"));
+            p.setDescription(getString(obj, "description"));
+            p.setCopyright(getString(obj, "copyright"));
+            p.setLink(getCollectionId(obj));
 
             JsonArray genreArray = obj.getAsJsonArray("genres");
             if (genreArray != null) {
@@ -229,6 +282,17 @@ public class ITunesSearchService {
     private static String getString(JsonObject obj, String key) {
         if (obj.has(key) && !obj.get(key).isJsonNull()) {
             return obj.get(key).getAsString();
+        }
+        return null;
+    }
+
+    /** collectionId is an integer in iTunes API. Extract and convert to string. */
+    private static String getCollectionId(JsonObject obj) {
+        if (obj.has("collectionId") && !obj.get("collectionId").isJsonNull()) {
+            JsonElement el = obj.get("collectionId");
+            if (el.isJsonPrimitive()) {
+                return el.getAsJsonPrimitive().getAsNumber().toString();
+            }
         }
         return null;
     }

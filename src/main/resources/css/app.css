@@ -133,18 +133,91 @@
 }
 
 /* === Podcast Detail === */
+.podcast-detail-scroll {
+    -fx-background-color: transparent;
+}
+
+.podcast-detail-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
 .podcast-detail-header {
     -fx-background-color: -color-bg-default;
 }
 
+.podcast-detail-image-pane {
+    -fx-background-color: -color-bg-inset;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 16, 0, 0, 4);
+}
+
 .podcast-detail-title {
-    -fx-font-size: 18px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
+}
+
+.podcast-detail-author {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-muted;
+}
+
+.podcast-detail-genre-chip {
+    -fx-background-color: -color-accent-subtle;
+    -fx-text-fill: -color-accent-fg;
+    -fx-font-size: 11px;
+    -fx-padding: 1 8 1 8;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+}
+
+.podcast-detail-stats {
+    -fx-padding: 1 0 2 0;
+}
+
+.podcast-detail-stat-pill {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-background-color: -color-bg-inset;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 8;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.podcast-detail-since {
+    -fx-text-fill: -color-danger-fg;
+    -fx-background-color: -color-danger-subtle;
+    -fx-border-color: transparent;
+}
+
+.desc-tooltip {
+    -fx-font-size: 12px;
+    -fx-background-color: -color-bg-default;
+    -fx-text-fill: -color-fg-default;
+    -fx-background-radius: 8;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 10 14 10 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 16, 0, 0, 4);
+}
+
+.podcast-detail-desc-section {
+    -fx-background-color: -color-bg-default;
+}
+
+.podcast-detail-section-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
 }
 
 .podcast-detail-desc {
     -fx-font-size: 12px;
     -fx-text-fill: -color-fg-muted;
+    -fx-line-spacing: 4px;
 }
 
 .subscribed-badge {
@@ -156,6 +229,22 @@
     -fx-border-color: -color-border-muted;
     -fx-border-width: 1;
     -fx-border-radius: 12;
+}
+
+.unsub-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-danger-fg;
+    -fx-font-size: 12px;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 6;
+    -fx-border-color: -color-danger-fg;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+}
+
+.unsub-btn:hover {
+    -fx-background-color: -color-danger-subtle;
 }
 
 .back-btn {
@@ -627,41 +716,127 @@
     -fx-background-color: -color-bg-default;
 }
 
+.discover-detail-scroll {
+    -fx-background-color: transparent;
+}
+
+.discover-detail-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
 .discover-detail-header {
     -fx-background-color: -color-bg-default;
 }
 
 .discover-detail-image-pane {
     -fx-background-color: -color-bg-inset;
-    -fx-background-radius: 12;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 20, 0, 0, 6);
 }
 
 .discover-detail-title {
-    -fx-font-size: 22px;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: -color-fg-default;
 }
 
 .discover-detail-author {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-text-fill: -color-fg-muted;
 }
 
-.discover-detail-meta {
+/* Genre chips in detail view */
+.discover-detail-genre-chip {
+    -fx-background-color: -color-accent-subtle;
+    -fx-text-fill: -color-accent-fg;
+    -fx-font-size: 12px;
+    -fx-padding: 3 12 3 12;
+    -fx-background-radius: 14;
+    -fx-font-weight: bold;
+}
+
+/* Stats row */
+.discover-detail-stats {
     -fx-padding: 4 0 4 0;
 }
 
-.discover-detail-meta-line {
-    -fx-font-size: 13px;
+.discover-detail-stat-pill {
+    -fx-font-size: 12px;
     -fx-text-fill: -color-fg-muted;
+    -fx-background-color: -color-bg-inset;
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 10;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.discover-detail-since {
+    -fx-text-fill: -color-danger-fg;
+    -fx-background-color: -color-danger-subtle;
+    -fx-border-color: transparent;
+}
+
+/* Section card */
+.discover-detail-section {
+    -fx-background-color: -color-bg-default;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1 0 0 0;
+}
+
+.discover-detail-section-label {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-fg-default;
 }
 
 .discover-detail-desc {
     -fx-font-size: 13px;
     -fx-text-fill: -color-fg-muted;
-    -fx-line-spacing: 4px;
+    -fx-line-spacing: 6px;
 }
 
+/* Detail fields */
+.discover-detail-fields {
+    -fx-padding: 0;
+}
+
+.discover-detail-field-key {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-weight: bold;
+}
+
+.discover-detail-field-value {
+    -fx-font-size: 13px;
+    -fx-text-fill: -color-fg-default;
+}
+
+/* Subscribe button */
+.discover-detail-subscribe-btn {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20 8 20;
+    -fx-background-radius: 8;
+}
+
+/* Loading overlay */
+.discover-detail-loading-overlay {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+}
+
+.discover-detail-loading {
+    -fx-font-size: 14px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-background-color: -color-bg-default;
+    -fx-padding: 12 24 12 24;
+    -fx-background-radius: 8;
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+/* Status messages */
 .discover-detail-status {
     -fx-font-size: 13px;
     -fx-text-fill: -color-fg-muted;

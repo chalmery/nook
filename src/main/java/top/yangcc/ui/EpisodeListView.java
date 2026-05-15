@@ -2,8 +2,10 @@ package top.yangcc.ui;
 
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import top.yangcc.model.Episode;
+import top.yangcc.util.HtmlUtils;
 import top.yangcc.model.Podcast;
 
 import java.lang.System.Logger;
@@ -20,6 +22,7 @@ public class EpisodeListView extends VBox {
     private Episode loadingEpisode;
     private Consumer<Episode> onEpisodeClicked;
     private Consumer<Episode> onPlayRequested;
+    private boolean showAll = false;
 
     public EpisodeListView() {
         getStyleClass().add("episode-list-view");
@@ -47,6 +50,28 @@ public class EpisodeListView extends VBox {
         getChildren().add(episodeList);
     }
 
+    /** Show all episodes without internal scrolling — for use inside an outer ScrollPane. */
+    public void setShowAll(boolean showAll) {
+        this.showAll = showAll;
+        if (showAll) {
+            episodeList.setFixedCellSize(56);
+            VBox.setVgrow(episodeList, Priority.NEVER);
+            updateListViewHeight();
+            // hide internal scroll bars after skin is laid out
+            javafx.application.Platform.runLater(() ->
+                episodeList.lookupAll(".scroll-bar").forEach(n -> n.setVisible(false)));
+        }
+    }
+
+    private void updateListViewHeight() {
+        if (!showAll) return;
+        int n = episodeList.getItems().size();
+        double h = n > 0 ? n * episodeList.getFixedCellSize() + 2 : 80;
+        episodeList.setPrefHeight(h);
+        episodeList.setMinHeight(h);
+        episodeList.setMaxHeight(h);
+    }
+
     public void setPodcast(Podcast podcast) {
         if (podcast == null) {
             episodeList.getItems().clear();
@@ -55,6 +80,7 @@ public class EpisodeListView extends VBox {
         episodeList.getItems().setAll(podcast.getEpisodes());
         playingEpisode = null;
         episodeList.refresh();
+        updateListViewHeight();
         LOG.log(Level.INFO, "Episode list populated: {0} episodes", podcast.getEpisodes().size());
     }
 
@@ -141,7 +167,8 @@ public class EpisodeListView extends VBox {
 
                 String desc = episode.getDescription();
                 if (desc != null && !desc.isBlank()) {
-                    String clean = desc.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim();
+                    String clean = HtmlUtils.clean(desc);
+                    clean = clean.replace('\n', ' ');
                     descLabel.setText(clean.length() > 50 ? clean.substring(0, 50) + "..." : clean);
                     descLabel.setVisible(true);
                     descLabel.setManaged(true);

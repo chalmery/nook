@@ -75,6 +75,10 @@ public class SubscriptionManager {
         return podcast;
     }
 
+    public void persist() {
+        saveSubscriptions();
+    }
+
     public void removeSubscription(Podcast podcast) {
         LOG.log(Level.INFO, "Removing subscription: {0}", podcast.getTitle());
         podcasts.remove(podcast);

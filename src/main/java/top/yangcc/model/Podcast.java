@@ -19,6 +19,7 @@ public class Podcast {
     private String releaseDate;
     private int trackCount;
     private List<Episode> episodes = new ArrayList<>();
+    private String source; // "discover" or null for manual
 
     public Podcast() {}
 
@@ -63,6 +64,9 @@ public class Podcast {
 
     public List<Episode> getEpisodes() { return episodes; }
     public void setEpisodes(List<Episode> episodes) { this.episodes = episodes; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 
     @Override
     public String toString() {

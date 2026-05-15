@@ -2,6 +2,7 @@ package top.yangcc.ui;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
 import javafx.util.Duration;
@@ -81,6 +82,23 @@ public class MainLayout extends BorderPane {
         detailView.setPodcast(podcast);
         detailView.setPlayingEpisode(currentEpisode);
         setCenter(detailView);
+
+        // enrich discover-sourced podcasts via iTunes Lookup API
+        if ("discover".equals(podcast.getSource()) && podcast.getLink() != null && !podcast.getLink().isBlank()) {
+            Thread enrichThread = new Thread(() -> {
+                try {
+                    iTunesSearchService.enrichPodcast(podcast);
+                    Platform.runLater(() -> {
+                        detailView.refreshAfterEnrich();
+                        subscriptionManager.persist();
+                    });
+                } catch (Exception ex) {
+                    LOG.log(Level.WARNING, "Failed to enrich subscribed podcast: " + ex.getMessage(), ex);
+                }
+            }, "sub-enrich");
+            enrichThread.setDaemon(true);
+            enrichThread.start();
+        }
     }
 
     private void wireCallbacks() {
@@ -125,6 +143,25 @@ public class MainLayout extends BorderPane {
             discoverDetailView.setPodcast(podcast);
             discoverDetailView.setOnSubscribe(p -> subscribeFromDiscover(p));
             setCenter(discoverDetailView);
+
+            // enrich podcast data via iTunes Lookup API in background
+            if (podcast.getLink() != null && !podcast.getLink().isBlank()) {
+                discoverDetailView.setLoading(true);
+                Thread enrichThread = new Thread(() -> {
+                    try {
+                        iTunesSearchService.enrichPodcast(podcast);
+                        Platform.runLater(() -> {
+                            discoverDetailView.refreshAfterEnrich();
+                            discoverDetailView.setLoading(false);
+                        });
+                    } catch (Exception ex) {
+                        LOG.log(Level.WARNING, "Failed to enrich podcast: " + ex.getMessage(), ex);
+                        Platform.runLater(() -> discoverDetailView.setLoading(false));
+                    }
+                }, "discover-enrich");
+                enrichThread.setDaemon(true);
+                enrichThread.start();
+            }
         });
 
         discoverDetailView.setOnBack(() -> {
@@ -146,6 +183,15 @@ public class MainLayout extends BorderPane {
         detailView.setOnPlayLatest(episode -> {
             LOG.log(Level.INFO, "Play latest episode: {0}", episode.getTitle());
             playEpisode(episode);
+        });
+
+        detailView.setOnUnsubscribe(() -> {
+            if (selectedPodcast != null) {
+                LOG.log(Level.INFO, "Unsubscribing from: {0}", selectedPodcast.getTitle());
+                subscriptionManager.removeSubscription(selectedPodcast);
+                gridView.refreshCards();
+                showGridView();
+            }
         });
 
         // --- player bar ---
@@ -171,6 +217,31 @@ public class MainLayout extends BorderPane {
 
         try {
             Podcast subscribed = subscriptionManager.addSubscription(feedUrl);
+            // copy iTunes metadata from discover podcast to subscribed podcast
+            subscribed.setSource("discover");
+            if (podcast.getLink() != null && !podcast.getLink().isBlank()) {
+                subscribed.setLink(podcast.getLink());
+            }
+            if (podcast.getGenres() != null && !podcast.getGenres().isEmpty()) {
+                subscribed.setGenres(podcast.getGenres());
+            }
+            if (podcast.getPrimaryGenre() != null && !podcast.getPrimaryGenre().isBlank()) {
+                subscribed.setPrimaryGenre(podcast.getPrimaryGenre());
+            }
+            if (podcast.getTrackCount() > 0) {
+                subscribed.setTrackCount(podcast.getTrackCount());
+            }
+            if (podcast.getReleaseDate() != null && !podcast.getReleaseDate().isBlank()) {
+                subscribed.setReleaseDate(podcast.getReleaseDate());
+            }
+            if (podcast.getDescription() != null && !podcast.getDescription().isBlank()) {
+                subscribed.setDescription(podcast.getDescription());
+            }
+            if (podcast.getCopyright() != null && !podcast.getCopyright().isBlank()) {
+                subscribed.setCopyright(podcast.getCopyright());
+            }
+            subscriptionManager.persist();
+
             LOG.log(Level.INFO, "Subscribed to: {0}", subscribed.getTitle());
             discoverDetailView.setSubscribeSuccess();
             gridView.refreshCards();

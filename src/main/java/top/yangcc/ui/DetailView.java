@@ -5,6 +5,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import top.yangcc.model.Episode;
+import top.yangcc.util.HtmlUtils;
 
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
@@ -77,7 +78,7 @@ public class DetailView extends VBox {
         titleLabel.setText(episode.getTitle());
         String desc = episode.getDescription();
         if (desc != null && !desc.isEmpty()) {
-            showNotes.setText(desc.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim());
+            showNotes.setText(HtmlUtils.clean(desc));
         } else {
             showNotes.setText("暂无 Show Notes");
         }
