@@ -119,7 +119,7 @@ jobs:
             --main-class top.yangcc.NookApp \
             --type app-image \
             --app-content native/ \
-            --module-path "${JMOD_DIR}" \
+            --module-path "${JMOD_DIR}:${JAVA_HOME}/jmods" \
             --add-modules javafx.controls,javafx.base,javafx.graphics \
             --dest dist/appimage \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
@@ -439,8 +439,8 @@ jobs:
             '--java-options', '-XX:ErrorFile=logs/hs_err_pid%p.log'
           )
 
-          jpackage @commonArgs '--type', 'msi'
-          jpackage @commonArgs '--type', 'exe'
+          jpackage @($commonArgs + @('--type', 'msi'))
+          jpackage @($commonArgs + @('--type', 'exe'))
 
           Get-ChildItem dist/Nook-* | ForEach-Object {
             $new = $_.Name -replace '^Nook', 'nook'
