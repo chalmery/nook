@@ -92,6 +92,7 @@ jobs:
             --type deb \
             --linux-package-name nook \
             --linux-deb-maintainer "nook@example.com" \
+            --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
             --add-modules javafx.controls,javafx.base,javafx.graphics \
@@ -114,6 +115,7 @@ jobs:
           dpkg-deb -x "$DEB" "$APP_DIR/"
           cp -r "$APP_DIR/opt/nook/"* "$APP_DIR/"
           rm -rf "$APP_DIR/opt/"
+          cp icon/nook-256x256.png "$APP_DIR/nook.png"
 
           cat > "$APP_DIR/AppRun" << 'APPRUN'
           #!/bin/bash
@@ -230,6 +232,7 @@ jobs:
             --main-class top.yangcc.NookApp \
             --type rpm \
             --linux-package-name nook \
+            --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
             --add-modules javafx.controls,javafx.base,javafx.graphics \
@@ -325,6 +328,7 @@ jobs:
             --main-jar "${MAIN_JAR}" \
             --main-class top.yangcc.NookApp \
             --type dmg \
+            --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
             --add-modules javafx.controls,javafx.base,javafx.graphics \
@@ -397,6 +401,11 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate ICO icon
+        run: |
+          pip install Pillow --quiet
+          python -c "from PIL import Image; Image.open('icon/nook-256x256.png').save('icon/nook.ico', format='ICO')"
+
       - name: Package (.msi + .exe)
         run: |
           $VERSION = "${{ steps.version.outputs.VERSION }}"
@@ -410,6 +419,7 @@ jobs:
             '--input', 'target/deps',
             '--main-jar', $MAIN_JAR,
             '--main-class', 'top.yangcc.NookApp',
+            '--icon', 'icon/nook.ico',
             '--win-menu',
             '--win-menu-group', 'Nook',
             '--app-content', 'native/',

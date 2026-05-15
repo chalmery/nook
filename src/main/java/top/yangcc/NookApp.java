@@ -2,6 +2,7 @@ package top.yangcc;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import top.yangcc.ui.MainLayout;
 import top.yangcc.ui.ThemeManager;
@@ -33,6 +34,7 @@ public class NookApp extends Application {
         LOG.log(Level.INFO, "CSS loaded: {0}", cssUrl);
 
         stage.setTitle("Nook");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon/nook-256x256.png")));
         stage.setScene(scene);
         stage.show();
         LOG.log(Level.INFO, "Stage shown");
