@@ -107,34 +107,18 @@ jobs:
       - name: Package (AppImage)
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          MAIN_JAR=$(basename target/deps/nook-*.jar)
-          JMOD_DIR=$(ls -d javafx-jmods/javafx-jmods-*/ | head -1)
-
-          jpackage \
-            --name nook \
-            --app-version "${VERSION}" \
-            --description "Podcast player" \
-            --input target/deps \
-            --main-jar "${MAIN_JAR}" \
-            --main-class top.yangcc.NookApp \
-            --type app-image \
-            --app-content native/ \
-            --module-path "${JMOD_DIR}:${JAVA_HOME}/jmods" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics \
-            --dest dist/appimage \
-            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
-            --java-options "-Dprism.lcdtext=false" \
-            --java-options "-Dprism.forceGPU=true" \
-            --java-options "-Djavafx.ime=true" \
-            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
-
           APP_DIR="nook.AppDir"
-          cp -r dist/appimage/nook/* "$APP_DIR/"
+
+          DEB=$(ls dist/nook_*.deb | head -1)
+          mkdir -p "$APP_DIR"
+          dpkg-deb -x "$DEB" "$APP_DIR/"
+          cp -r "$APP_DIR/opt/nook/"* "$APP_DIR/"
+          rm -rf "$APP_DIR/opt/"
 
           cat > "$APP_DIR/AppRun" << 'APPRUN'
           #!/bin/bash
           HERE="$(dirname "$(readlink -f "$0")")"
-          exec "$HERE/bin/nook" "$@"
+          exec "$HERE/bin/Nook" "$@"
           APPRUN
           chmod +x "$APP_DIR/AppRun"
 
@@ -154,7 +138,7 @@ jobs:
           ./appimagetool --appimage-extract
           ARCH=x86_64 ./squashfs-root/AppRun "$APP_DIR" "dist/nook-${VERSION}.AppImage"
 
-          rm -rf "$APP_DIR" appimagetool squashfs-root dist/appimage
+          rm -rf "$APP_DIR" appimagetool squashfs-root
           echo "=== AppImage ===" && ls -lh dist/
 
       - uses: actions/upload-artifact@v4
