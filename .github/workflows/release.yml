@@ -43,13 +43,15 @@ jobs:
           SRC="/usr/lib/x86_64-linux-gnu"
           PLAT="linux-x86_64"
           mkdir -p "native/$PLAT"
-          cp -L "$SRC/libvlc.so.5.6.1"    "native/$PLAT/"
-          cp -L "$SRC/libvlccore.so.9.0.1" "native/$PLAT/"
+          cp -L "$SRC/libvlc.so"*    "native/$PLAT/"
+          cp -L "$SRC/libvlccore.so"* "native/$PLAT/"
           cd "native/$PLAT"
-          ln -sf libvlc.so.5.6.1    libvlc.so.5
-          ln -sf libvlc.so.5        libvlc.so
-          ln -sf libvlccore.so.9.0.1 libvlccore.so.9
-          ln -sf libvlccore.so.9    libvlccore.so
+          LIBVLC=$(basename "$SRC"/libvlc.so.*)
+          LIBVLCCORE=$(basename "$SRC"/libvlccore.so.*)
+          ln -sf "$LIBVLC"    libvlc.so.5
+          ln -sf libvlc.so.5  libvlc.so
+          ln -sf "$LIBVLCCORE" libvlccore.so.9
+          ln -sf libvlccore.so.9 libvlccore.so
           cd -
           cp -r "$SRC/vlc/plugins" "native/$PLAT/plugins"
           echo "=== Bundled ($PLAT) ===" && du -sh "native/$PLAT/"
@@ -139,13 +141,15 @@ jobs:
           SRC="/usr/lib64"
           PLAT="linux-x86_64"
           mkdir -p "native/$PLAT"
-          cp -L "$SRC/libvlc.so.5.6.1"    "native/$PLAT/"
-          cp -L "$SRC/libvlccore.so.9.0.1" "native/$PLAT/"
+          cp -L "$SRC/libvlc.so"*    "native/$PLAT/"
+          cp -L "$SRC/libvlccore.so"* "native/$PLAT/"
           cd "native/$PLAT"
-          ln -sf libvlc.so.5.6.1    libvlc.so.5
-          ln -sf libvlc.so.5        libvlc.so
-          ln -sf libvlccore.so.9.0.1 libvlccore.so.9
-          ln -sf libvlccore.so.9    libvlccore.so
+          LIBVLC=$(basename "$SRC"/libvlc.so.*)
+          LIBVLCCORE=$(basename "$SRC"/libvlccore.so.*)
+          ln -sf "$LIBVLC"    libvlc.so.5
+          ln -sf libvlc.so.5  libvlc.so
+          ln -sf "$LIBVLCCORE" libvlccore.so.9
+          ln -sf libvlccore.so.9 libvlccore.so
           cd -
           cp -r "$SRC/vlc/plugins" "native/$PLAT/plugins"
           echo "=== Bundled ($PLAT) ===" && du -sh "native/$PLAT/"
