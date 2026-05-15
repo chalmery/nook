@@ -102,11 +102,64 @@ jobs:
             --java-options "-Djavafx.ime=true" \
             --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
 
-          echo "=== Package ===" && ls -lh dist/
+          echo "=== .deb ===" && ls -lh dist/
+
+      - name: Package (AppImage)
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          MAIN_JAR=$(basename target/deps/nook-*.jar)
+          JMOD_DIR=$(ls -d javafx-jmods/javafx-jmods-*/ | head -1)
+
+          jpackage \
+            --name nook \
+            --app-version "${VERSION}" \
+            --description "Podcast player" \
+            --input target/deps \
+            --main-jar "${MAIN_JAR}" \
+            --main-class top.yangcc.NookApp \
+            --type app-image \
+            --app-content native/ \
+            --module-path "${JMOD_DIR}" \
+            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --dest dist/appimage \
+            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
+            --java-options "-Dprism.lcdtext=false" \
+            --java-options "-Dprism.forceGPU=true" \
+            --java-options "-Djavafx.ime=true" \
+            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          APP_DIR="nook.AppDir"
+          cp -r dist/appimage/nook/* "$APP_DIR/"
+
+          cat > "$APP_DIR/AppRun" << 'APPRUN'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "$HERE/bin/nook" "$@"
+          APPRUN
+          chmod +x "$APP_DIR/AppRun"
+
+          cat > "$APP_DIR/nook.desktop" << DESKTOP
+          [Desktop Entry]
+          Name=Nook
+          Comment=Podcast player
+          Exec=nook
+          Icon=nook
+          Type=Application
+          Categories=AudioVideo;Audio;
+          DESKTOP
+
+          wget -q -O appimagetool \
+            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          ./appimagetool --appimage-extract
+          ARCH=x86_64 ./squashfs-root/AppRun "$APP_DIR" "dist/nook-${VERSION}.AppImage"
+
+          rm -rf "$APP_DIR" appimagetool squashfs-root dist/appimage
+          echo "=== AppImage ===" && ls -lh dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nook-linux-deb-${{ steps.version.outputs.VERSION }}
+          name: nook-linux-${{ steps.version.outputs.VERSION }}
           path: dist/*
 
   # ════════════════════════════════════════════════════════════════
@@ -299,6 +352,8 @@ jobs:
             --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
 
           echo "=== Package ===" && ls -lh dist/
+          mv dist/Nook-*.dmg "dist/nook-${VERSION}.dmg"
+          echo "=== Final ===" && ls -lh dist/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -309,7 +364,7 @@ jobs:
   #  Windows
   # ════════════════════════════════════════════════════════════════
   build-windows:
-    name: windows-msi
+    name: windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -358,38 +413,46 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Package (.msi)
+      - name: Package (.msi + .exe)
         run: |
           $VERSION = "${{ steps.version.outputs.VERSION }}"
           $MAIN_JAR = (Get-ChildItem target/deps/nook-*.jar | Select-Object -First 1).Name
           $JMOD_DIR = (Get-ChildItem -Directory javafx-jmods/javafx-jmods-* | Select-Object -First 1).FullName
 
-          jpackage `
-            --name Nook `
-            --app-version "$VERSION" `
-            --description "Podcast player" `
-            --input target/deps `
-            --main-jar "$MAIN_JAR" `
-            --main-class top.yangcc.NookApp `
-            --type msi `
-            --win-menu `
-            --win-menu-group Nook `
-            --app-content native/ `
-            --module-path "$JMOD_DIR" `
-            --add-modules javafx.controls,javafx.base,javafx.graphics `
-            --dest dist `
-            --java-options "--enable-native-access=javafx.graphics,com.sun.jna" `
-            --java-options "-Dprism.lcdtext=false" `
-            --java-options "-Dprism.forceGPU=true" `
-            --java-options "-Djavafx.ime=true" `
-            --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+          $commonArgs = @(
+            '--name', 'Nook',
+            '--app-version', $VERSION,
+            '--description', 'Podcast player',
+            '--input', 'target/deps',
+            '--main-jar', $MAIN_JAR,
+            '--main-class', 'top.yangcc.NookApp',
+            '--win-menu',
+            '--win-menu-group', 'Nook',
+            '--app-content', 'native/',
+            '--module-path', $JMOD_DIR,
+            '--add-modules', 'javafx.controls,javafx.base,javafx.graphics',
+            '--dest', 'dist',
+            '--java-options', '--enable-native-access=javafx.graphics,com.sun.jna',
+            '--java-options', '-Dprism.lcdtext=false',
+            '--java-options', '-Dprism.forceGPU=true',
+            '--java-options', '-Djavafx.ime=true',
+            '--java-options', '-XX:ErrorFile=logs/hs_err_pid%p.log'
+          )
+
+          jpackage @commonArgs '--type', 'msi'
+          jpackage @commonArgs '--type', 'exe'
+
+          Get-ChildItem dist/Nook-* | ForEach-Object {
+            $new = $_.Name -replace '^Nook', 'nook'
+            Rename-Item $_.FullName $new
+          }
 
           echo "=== Package ==="
           Get-ChildItem dist/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nook-windows-msi-${{ steps.version.outputs.VERSION }}
+          name: nook-windows-${{ steps.version.outputs.VERSION }}
           path: dist/*
 
   # ════════════════════════════════════════════════════════════════
@@ -410,6 +473,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Nook ${{ github.ref_name }}
+          name: nook ${{ github.ref_name }}
           files: artifacts/*
           generate_release_notes: true
