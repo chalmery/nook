@@ -314,6 +314,19 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate ICNS icon
+        run: |
+          mkdir -p nook.iconset
+          cp icon/nook-16x16.png   nook.iconset/icon_16x16.png
+          cp icon/nook-32x32.png   nook.iconset/icon_16x16@2x.png
+          cp icon/nook-32x32.png   nook.iconset/icon_32x32.png
+          cp icon/nook-64x64.png   nook.iconset/icon_32x32@2x.png
+          cp icon/nook-128x128.png nook.iconset/icon_128x128.png
+          cp icon/nook-256x256.png nook.iconset/icon_128x128@2x.png
+          cp icon/nook-256x256.png nook.iconset/icon_256x256.png
+          iconutil -c icns nook.iconset -o icon/nook.icns
+          rm -rf nook.iconset
+
       - name: Package (.dmg)
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
@@ -328,7 +341,7 @@ jobs:
             --main-jar "${MAIN_JAR}" \
             --main-class top.yangcc.NookApp \
             --type dmg \
-            --icon icon/nook-256x256.png \
+            --icon icon/nook.icns \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
             --add-modules javafx.controls,javafx.base,javafx.graphics \
