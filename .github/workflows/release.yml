@@ -43,17 +43,21 @@ jobs:
           SRC="/usr/lib/x86_64-linux-gnu"
           PLAT="linux-x86_64"
           mkdir -p "native/$PLAT"
-          cp -L "$SRC/libvlc.so"*    "native/$PLAT/"
-          cp -L "$SRC/libvlccore.so"* "native/$PLAT/"
+
+          LIBVLC=$(basename "$(readlink -f "$SRC/libvlc.so")")
+          LIBVLCCORE=$(basename "$(readlink -f "$SRC/libvlccore.so")")
+
+          cp -L "$SRC/$LIBVLC"      "native/$PLAT/"
+          cp -L "$SRC/$LIBVLCCORE"  "native/$PLAT/"
+          cp -r "$SRC/vlc/plugins"  "native/$PLAT/plugins"
+
           cd "native/$PLAT"
-          LIBVLC=$(basename "$SRC"/libvlc.so.*)
-          LIBVLCCORE=$(basename "$SRC"/libvlccore.so.*)
-          ln -sf "$LIBVLC"    libvlc.so.5
-          ln -sf libvlc.so.5  libvlc.so
-          ln -sf "$LIBVLCCORE" libvlccore.so.9
+          ln -sf "$LIBVLC"       libvlc.so.5
+          ln -sf libvlc.so.5     libvlc.so
+          ln -sf "$LIBVLCCORE"   libvlccore.so.9
           ln -sf libvlccore.so.9 libvlccore.so
           cd -
-          cp -r "$SRC/vlc/plugins" "native/$PLAT/plugins"
+
           echo "=== Bundled ($PLAT) ===" && du -sh "native/$PLAT/"
 
       - name: Build application
@@ -141,17 +145,21 @@ jobs:
           SRC="/usr/lib64"
           PLAT="linux-x86_64"
           mkdir -p "native/$PLAT"
-          cp -L "$SRC/libvlc.so"*    "native/$PLAT/"
-          cp -L "$SRC/libvlccore.so"* "native/$PLAT/"
+
+          LIBVLC=$(basename "$(readlink -f "$SRC/libvlc.so")")
+          LIBVLCCORE=$(basename "$(readlink -f "$SRC/libvlccore.so")")
+
+          cp -L "$SRC/$LIBVLC"      "native/$PLAT/"
+          cp -L "$SRC/$LIBVLCCORE"  "native/$PLAT/"
+          cp -r "$SRC/vlc/plugins"  "native/$PLAT/plugins"
+
           cd "native/$PLAT"
-          LIBVLC=$(basename "$SRC"/libvlc.so.*)
-          LIBVLCCORE=$(basename "$SRC"/libvlccore.so.*)
-          ln -sf "$LIBVLC"    libvlc.so.5
-          ln -sf libvlc.so.5  libvlc.so
-          ln -sf "$LIBVLCCORE" libvlccore.so.9
+          ln -sf "$LIBVLC"       libvlc.so.5
+          ln -sf libvlc.so.5     libvlc.so
+          ln -sf "$LIBVLCCORE"   libvlccore.so.9
           ln -sf libvlccore.so.9 libvlccore.so
           cd -
-          cp -r "$SRC/vlc/plugins" "native/$PLAT/plugins"
+
           echo "=== Bundled ($PLAT) ===" && du -sh "native/$PLAT/"
 
       - name: Build application
@@ -352,6 +360,7 @@ jobs:
 
       - name: Extract version
         id: version
+        shell: bash
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Package (.msi)
