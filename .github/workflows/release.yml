@@ -44,8 +44,8 @@ jobs:
           PLAT="linux-x86_64"
           mkdir -p "native/$PLAT"
 
-          LIBVLC=$(basename "$(readlink -f "$SRC/libvlc.so")")
-          LIBVLCCORE=$(basename "$(readlink -f "$SRC/libvlccore.so")")
+          LIBVLC=$(basename "$(readlink -f "$SRC/libvlc.so.5")")
+          LIBVLCCORE=$(basename "$(readlink -f "$SRC/libvlccore.so.9")")
 
           cp -L "$SRC/$LIBVLC"      "native/$PLAT/"
           cp -L "$SRC/$LIBVLCCORE"  "native/$PLAT/"
@@ -146,8 +146,8 @@ jobs:
           PLAT="linux-x86_64"
           mkdir -p "native/$PLAT"
 
-          LIBVLC=$(basename "$(readlink -f "$SRC/libvlc.so")")
-          LIBVLCCORE=$(basename "$(readlink -f "$SRC/libvlccore.so")")
+          LIBVLC=$(basename "$(readlink -f "$SRC/libvlc.so.5")")
+          LIBVLCCORE=$(basename "$(readlink -f "$SRC/libvlccore.so.9")")
 
           cp -L "$SRC/$LIBVLC"      "native/$PLAT/"
           cp -L "$SRC/$LIBVLCCORE"  "native/$PLAT/"
@@ -211,7 +211,7 @@ jobs:
           path: dist/*
 
   # ════════════════════════════════════════════════════════════════
-  #  macOS — Apple Silicon + Intel
+  #  macOS — Apple Silicon
   # ════════════════════════════════════════════════════════════════
   build-macos:
     name: ${{ matrix.name }}
@@ -225,11 +225,6 @@ jobs:
             javafx-arch: osx-aarch64
             vlc-arch: arm64
             platform: macos-aarch64
-          - name: macos-intel
-            runner: macos-13
-            javafx-arch: osx-x64
-            vlc-arch: intel64
-            platform: macos-x86_64
 
     steps:
       - uses: actions/checkout@v4
