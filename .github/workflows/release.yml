@@ -147,7 +147,7 @@ jobs:
           DESKTOP
 
           mkdir -p "$APP_DIR/usr/share/metainfo"
-          cp assets/nook.metainfo.xml "$APP_DIR/usr/share/metainfo/"
+          cp assets/nook.metainfo.xml "$APP_DIR/usr/share/metainfo/nook.appdata.xml"
 
           wget -q -O appimagetool \
             "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
@@ -268,7 +268,7 @@ jobs:
           # Generate file list (relative to spec)
           find . \( -type f -o -type l \) | sed 's|^\.||' | sort > files.list
 
-          cat > nook.spec << SPECEOF
+          cat > nook.spec << EOF
           Name:           nook
           Version:        ${VERSION}
           Release:        1
@@ -279,8 +279,8 @@ jobs:
           A modern desktop podcast player built with JavaFX.
           Browse, search, and subscribe to your favorite podcasts.
 
-          %files -f files.list
-          SPECEOF
+          %files -f $PWD/files.list
+          EOF
 
           mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           rpmbuild -bb --buildroot="$(pwd)" \
