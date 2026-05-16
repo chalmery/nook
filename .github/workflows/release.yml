@@ -95,7 +95,7 @@ jobs:
             --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http \
+            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http,java.logging \
             --dest dist \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
             --java-options "-Dprism.lcdtext=false" \
@@ -250,7 +250,7 @@ jobs:
             --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http \
+            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http,java.logging \
             --dest dist \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
             --java-options "-Dprism.lcdtext=false" \
@@ -391,7 +391,7 @@ jobs:
             --icon icon/nook.icns \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http \
+            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http,java.logging \
             --dest dist \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
             --java-options "-Dprism.lcdtext=false" \
@@ -484,7 +484,7 @@ jobs:
             '--win-menu-group', 'Nook',
             '--app-content', 'native/',
             '--module-path', $JMOD_DIR,
-            '--add-modules', 'javafx.controls,javafx.base,javafx.graphics,java.net.http',
+            '--add-modules', 'javafx.controls,javafx.base,javafx.graphics,java.net.http,java.logging',
             '--dest', 'dist',
             '--java-options', '--enable-native-access=javafx.graphics,com.sun.jna',
             '--java-options', '-Dprism.lcdtext=false',
