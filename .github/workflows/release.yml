@@ -110,7 +110,7 @@ jobs:
           dpkg-deb -e "${DEB_FILE}" repkg/DEBIAN/
           rm -f repkg/DEBIAN/md5sums
           mkdir -p repkg/usr/share/metainfo
-          cp assets/nook.metainfo.xml repkg/usr/share/metainfo/
+          cp assets/top.yangcc.nook.metainfo.xml repkg/usr/share/metainfo/
           rm -f "${DEB_FILE}"
           dpkg-deb -b repkg "${DEB_FILE}"
           rm -rf repkg
@@ -147,7 +147,7 @@ jobs:
           DESKTOP
 
           mkdir -p "$APP_DIR/usr/share/metainfo"
-          cp assets/nook.metainfo.xml "$APP_DIR/usr/share/metainfo/nook.appdata.xml"
+          cp assets/top.yangcc.nook.metainfo.xml "$APP_DIR/usr/share/metainfo/top.yangcc.nook.appdata.xml"
 
           wget -q -O appimagetool \
             "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
@@ -263,12 +263,12 @@ jobs:
           mkdir -p repkg && cd repkg
           rpm2cpio "../${RPM_FILE}" | cpio -idmv 2>/dev/null
           mkdir -p usr/share/metainfo
-          cp ../assets/nook.metainfo.xml usr/share/metainfo/
+          cp ../assets/top.yangcc.nook.metainfo.xml usr/share/metainfo/
 
-          # Generate file list (relative to spec)
-          find . \( -type f -o -type l \) -not -name 'nook.spec' | sed 's|^\.||' | sort > files.list
+          # Generate file list (exclude spec and rpmbuild dirs)
+          find . -not -path './rpmbuild/*' \( -type f -o -type l \) | sed 's|^\.||' | sort > /tmp/files.list
 
-          cat > nook.spec << EOF
+          cat > /tmp/nook.spec << EOF
           Name:           nook
           Version:        ${VERSION}
           Release:        1
@@ -279,13 +279,13 @@ jobs:
           A modern desktop podcast player built with JavaFX.
           Browse, search, and subscribe to your favorite podcasts.
 
-          %files -f $PWD/files.list
+          %files -f /tmp/files.list
           EOF
 
           mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           rpmbuild -bb --buildroot="$(pwd)" \
             --define "_topdir $(pwd)/rpmbuild" \
-            nook.spec
+            /tmp/nook.spec
 
           cp rpmbuild/RPMS/*/nook-*.rpm ../dist/
           cd .. && rm -rf repkg
