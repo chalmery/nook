@@ -266,7 +266,7 @@ jobs:
           cp ../assets/nook.metainfo.xml usr/share/metainfo/
 
           # Generate file list (relative to spec)
-          find . \( -type f -o -type l \) | sed 's|^\.||' | sort > files.list
+          find . \( -type f -o -type l \) -not -name 'nook.spec' | sed 's|^\.||' | sort > files.list
 
           cat > nook.spec << EOF
           Name:           nook
