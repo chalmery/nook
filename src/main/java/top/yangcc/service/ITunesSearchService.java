@@ -20,7 +20,7 @@ public class ITunesSearchService {
     private static final Logger LOG = System.getLogger("top.yangcc.itunes");
 
     private static final String SEARCH_URL = "https://itunes.apple.com/search";
-    private static final String LOOKUP_URL = "n";
+    private static final String LOOKUP_URL = "https://itunes.apple.com/lookup";
     private static final String TRENDING_URL = "https://rss.marketingtools.apple.com/api/v2/cn/podcasts/top/%d/podcasts.json";
 
     private static final String COUNTRY = "cn";

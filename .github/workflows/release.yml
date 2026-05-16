@@ -95,13 +95,25 @@ jobs:
             --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http \
             --dest dist \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
             --java-options "-Dprism.lcdtext=false" \
             --java-options "-Dprism.forceGPU=true" \
             --java-options "-Djavafx.ime=true" \
             --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          # Inject AppStream metainfo into DEB
+          DEB_FILE=$(ls dist/nook_*.deb | head -1)
+          mkdir -p repkg
+          dpkg-deb -x "${DEB_FILE}" repkg/
+          dpkg-deb -e "${DEB_FILE}" repkg/DEBIAN/
+          rm -f repkg/DEBIAN/md5sums
+          mkdir -p repkg/usr/share/metainfo
+          cp assets/nook.metainfo.xml repkg/usr/share/metainfo/
+          rm -f "${DEB_FILE}"
+          dpkg-deb -b repkg "${DEB_FILE}"
+          rm -rf repkg
 
           echo "=== .deb ===" && ls -lh dist/
 
@@ -133,6 +145,9 @@ jobs:
           Type=Application
           Categories=AudioVideo;Audio;
           DESKTOP
+
+          mkdir -p "$APP_DIR/usr/share/metainfo"
+          cp assets/nook.metainfo.xml "$APP_DIR/usr/share/metainfo/"
 
           wget -q -O appimagetool \
             "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
@@ -235,13 +250,45 @@ jobs:
             --icon icon/nook-256x256.png \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http \
             --dest dist \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
             --java-options "-Dprism.lcdtext=false" \
             --java-options "-Dprism.forceGPU=true" \
             --java-options "-Djavafx.ime=true" \
             --java-options "-XX:ErrorFile=logs/hs_err_pid%p.log"
+
+          # Inject AppStream metainfo — GNOME Software needs this
+          RPM_FILE=$(ls dist/nook-*.rpm | head -1)
+          mkdir -p repkg && cd repkg
+          rpm2cpio "../${RPM_FILE}" | cpio -idmv 2>/dev/null
+          mkdir -p usr/share/metainfo
+          cp ../assets/nook.metainfo.xml usr/share/metainfo/
+
+          # Generate file list (relative to spec)
+          find . \( -type f -o -type l \) | sed 's|^\.||' | sort > files.list
+
+          cat > nook.spec << SPECEOF
+          Name:           nook
+          Version:        ${VERSION}
+          Release:        1
+          Summary:        Podcast player
+          License:        MIT
+
+          %description
+          A modern desktop podcast player built with JavaFX.
+          Browse, search, and subscribe to your favorite podcasts.
+
+          %files -f files.list
+          SPECEOF
+
+          mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          rpmbuild -bb --buildroot="$(pwd)" \
+            --define "_topdir $(pwd)/rpmbuild" \
+            nook.spec
+
+          cp rpmbuild/RPMS/*/nook-*.rpm ../dist/
+          cd .. && rm -rf repkg
 
           echo "=== Package ===" && ls -lh dist/
 
@@ -344,7 +391,7 @@ jobs:
             --icon icon/nook.icns \
             --app-content native/ \
             --module-path "${JMOD_DIR}" \
-            --add-modules javafx.controls,javafx.base,javafx.graphics \
+            --add-modules javafx.controls,javafx.base,javafx.graphics,java.net.http \
             --dest dist \
             --java-options "--enable-native-access=javafx.graphics,com.sun.jna" \
             --java-options "-Dprism.lcdtext=false" \
@@ -437,7 +484,7 @@ jobs:
             '--win-menu-group', 'Nook',
             '--app-content', 'native/',
             '--module-path', $JMOD_DIR,
-            '--add-modules', 'javafx.controls,javafx.base,javafx.graphics',
+            '--add-modules', 'javafx.controls,javafx.base,javafx.graphics,java.net.http',
             '--dest', 'dist',
             '--java-options', '--enable-native-access=javafx.graphics,com.sun.jna',
             '--java-options', '-Dprism.lcdtext=false',

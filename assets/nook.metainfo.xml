@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>nook.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Nook</name>
+  <summary>Modern podcast player</summary>
+  <description>
+    <p>
+      A modern desktop podcast player with a clean interface.
+      Browse, search, and subscribe to your favorite podcasts.
+      Stream or download episodes for offline listening.
+    </p>
+  </description>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+  </categories>
+  <launchable type="desktop-id">nook.desktop</launchable>
+  <url type="homepage">https://github.com/chalmery/nook</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/chalmery/nook/main/assets/image.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/chalmery/nook/main/assets/image1.png</image>
+    </screenshot>
+  </screenshots>
+</component>
